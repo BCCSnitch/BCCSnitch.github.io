@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Drafts</title>
+    <link rel="stylesheet" href="./drafts.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <main class="page">
+        <header class="top">
+            <h1>Drafts</h1>
+            <div class="controls">
+                <button onclick="window.location.href='/'" class="ghost">Back</button>
+                <button id="newBtn" class="primary">Create New</button>
+                <button id="refreshBtn" class="primary">Refresh</button>
+            </div>
+        </header>
+
+        <section class="lists">
+            <div class="list-block">
+                <h2>Your Drafts</h2>
+                <div id="myDrafts" class="list"></div>
+            </div>
+
+            <div id="otherBlock" class="list-block" style="display:none">
+                <h2>Other people's drafts</h2>
+                <div id="otherDrafts" class="list"></div>
+            </div>
+        </section>
+
+        <div id="msg" class="msg"></div>
+    </main>
+
+    <script src="./drafts.js"></script>
+</body>
+</html>

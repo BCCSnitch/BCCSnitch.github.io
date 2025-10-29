@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="./admin.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <button class="home-btn" onclick="window.location.href='/'">
+        ← Return to Home
+      </button>
+      Admin Dashboard
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Add New User</h2>
+        <input type="email" id="emailInput" placeholder="Enter user email..." />
+        <select id="roleSelect">
+          <option value="Writer">Writer</option>
+          <option value="Admin">Admin</option>
+        </select>
+        <button id="addUserBtn">Add User</button>
+      </section>
+
+      <section class="card">
+        <h2>Admins</h2>
+        <ul class="list" id="adminList"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Writers</h2>
+        <ul class="list" id="writerList"></ul>
+      </section>
+    </main>
+
+    <script src="./admin.js"></script>
+  </body>
+</html>

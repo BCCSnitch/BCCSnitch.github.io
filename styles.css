@@ -1,0 +1,362 @@
+:root {
+  --bg: #111827;
+  --card: #1f2937;
+  --muted: #9ca3af;
+  --accent: #eab308;
+  --text: #f9fafb;
+  --radius: 12px;
+  --font: 'Inter', sans-serif;
+  --gap: 24px;
+}
+
+/* -----------------------
+   Global / Layout
+   ----------------------- */
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #334155;
+}
+
+.brand h1 {
+  color: var(--accent);
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+nav a, nav button {
+  all: unset;
+  color: var(--text);
+  text-decoration: none;
+  margin-left: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+nav a:hover, nav button:hover { color: var(--accent); }
+
+/* MAIN LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 2.3fr 0.8fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* main content wrapper */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* -----------------------
+   HERO - restored original behavior (cover, fixed image area)
+   ----------------------- */
+.hero {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 28px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.hero:hover { transform: translateY(-2px); }
+
+/* original hero-image rule: fixed height area so hero images look consistent */
+.hero-image {
+  width: 100%;
+  height: 400px;            /* restored from original */
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* restored: fill hero area (may crop edges) */
+  display: block;
+}
+
+.hero-text {
+  padding: 28px;
+}
+
+.hero h2 {
+  font-size: 2.2em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* hero meta (kept slim; preview removed earlier) */
+.hero .meta {
+  color: var(--muted);
+  font-size: 0.9em;
+  margin-top: 12px;
+}
+
+/* -----------------------
+   NEWS GRID (masonry via columns)
+   - news-grid becomes flex container of columns
+   - columns (.news-column) hold stacked cards
+   ----------------------- */
+.news-grid {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* column wrapper used by JS */
+.news-column {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+/* card */
+.news-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: block;
+  width: 100%;
+}
+
+.news-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+}
+
+/* image area: images determine card height naturally */
+.card-image {
+  width: 100%;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.card-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain; /* keep card images intact, don't crop inside card */
+  display: block;
+  background-color: #000;
+}
+
+/* card content (title + meta) */
+.card-content {
+  padding: 16px 18px;
+}
+
+.card-content h3 {
+  font-size: 1.15rem;
+  margin: 0;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.card-content .meta {
+  color: var(--muted);
+  font-size: 0.9em;
+  margin-top: 8px;
+}
+
+/* -----------------------
+   SIDEBAR (search + trending + optional extra)
+   ----------------------- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Search box (left unchanged visually) */
+.search-box {
+  margin-bottom: 0.5rem;
+}
+
+.search-box input {
+  width: calc(100% - 1.6rem);
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  border: none;
+  background: #1a2435;
+  color: var(--text);
+  outline: none;
+}
+
+/* -----------------------
+   TRENDING - restored original list-style rules
+   ----------------------- */
+.trending {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+}
+
+.trending h3 {
+  color: var(--accent);
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.trending ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trending li {
+  padding: 12px 6px;
+  border-bottom: 1px solid #334155;
+  cursor: pointer;
+  display: flex;               /* restored original: flex layout */
+  align-items: baseline;
+  gap: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.trending li:last-child { border-bottom: none; }
+
+.trending li:hover { background-color: rgba(255,255,255,0.03); }
+
+.trending-number {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.2em;
+  min-width: 20px;
+}
+
+.trending-title {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trending-views {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+/* Extra box below trending area (keeps previous neutral style) */
+.sidebar .sidebar-extra {
+  margin-top: 6px;
+  background: #0f1a26;
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* -----------------------
+   Loading / No results (made larger & centered)
+   ----------------------- */
+.no-results {
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+  margin: 32px auto;
+  padding: 28px;
+  font-size: 1.25rem;       /* larger, more visible */
+  max-width: 800px;
+  border-radius: 10px;
+}
+
+/* -----------------------
+   Account sidebar & overlay (unchanged)
+   ----------------------- */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1500;
+}
+.overlay.active { opacity: 1; visibility: visible; }
+
+.account-sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 340px;
+  height: 100%;
+  background: #101826;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+  z-index: 2001;
+  transition: right 0.35s ease;
+}
+.account-sidebar.open { right: 0; }
+
+.close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* footer */
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8em;
+  padding: 40px 0 10px 0;
+  border-top: 1px solid #334155;
+  margin-top: 40px;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .news-grid { gap: 18px; flex-direction: column; }
+  .news-column { gap: 18px; }
+}

@@ -1,1 +1,88 @@
-<!--website setup before code finished-->
+<!doctype html>
+<html lang="en">
+
+    <!--
+        ========================================================================
+        THE SNITCH — SATIRICAL NEWS WEBSITE
+        ------------------------------------------------------------------------
+        This HTML document builds a simple single-page news-style website inspired
+        by The Onion. It uses only HTML, CSS, and a little JavaScript.
+
+        The comments here are extremely detailed so that even someone with almost
+        no HTML experience can understand what every tag, attribute, and style does.
+        ========================================================================
+    -->
+
+    <head>
+
+        <!-- The head contains metadata — information *about* the webpage, not what is displayed -->
+        <meta charset="utf-8"> <!-- Defines character encoding so all letters/symbols display properly -->
+        <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Makes page adjust to phone/tablet sizes -->
+        <title>The Snitch</title> <!-- The title appears in the browser tab -->
+
+        <!-- Google Fonts: importing 'Inter' for clean, readable text -->
+        <link rel="preconnect" href="https://fonts.googleapis.com"> <!-- Prepares connection to Google Fonts for faster loading -->
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+        <!-- Internal CSS styles — these control how everything looks -->
+        <link rel="stylesheet" href="/styles.css">
+    </head>
+
+    <body>
+        <div class="container">
+            <header>
+                <div class="brand">
+                    <h1>The Snitch</h1>
+                </div>
+                <nav>
+                    <button id="login">Log In</button>
+                    <button id="account" style="display: none;">Account</button>
+                    <button class="admin" style="display: none;">Admin Dashboard</button>
+                    <button class="writeradmin" style="display: none;">Create New Article</button>
+                </nav>
+            </header>
+            
+            <main class="layout"> 
+                <section class="main-content"> 
+                <!-- Hero Story --> 
+                <div class="hero"> 
+                    <div class="hero-image"> 
+                        <img src="https://placehold.co/800x400" alt="Main Story"> </div> 
+                        <div class="hero-text"> 
+                            <h2>Main Headline: Breaking Satirical News Shocks Everyone</h2> 
+                            <p>In a stunning development, absolutely nothing of importance happened today — but it’s still somehow headline-worthy.</p> 
+                        </div> 
+                    </div> 
+                    <!-- Grid of News --> 
+                    <div class="news-grid"></div> 
+                </section> 
+                <!-- Search + Trending --> 
+                <aside class="sidebar"> <div class="search-box"> <input type="text" placeholder="Search headlines..."> </div> <div class="trending"> <h3>Trending</h3> <ul> <li>“Florida Man” Makes Shocking Return</li> <li>Government Accidentally Emails Everyone</li> <li>Study Shows Sleep Improves Sleep</li> <li>World’s Quietest News Day Celebrated Loudly</li> </ul> </div> </aside> </main>
+
+            <!--sidebar-->
+            <div id="overlay" class="overlay"></div>
+
+            <aside class="account-sidebar" id="accountSidebar">
+                <button class="close-btn" id="closeSidebar">×</button>
+                
+                <div class="account-header">
+                    <img id = "avatar" alt="User Avatar" class="avatar">
+                    <h2>My Account</h2>
+                    <p class="email" id="userEmail"></p>
+                </div>
+                <button class="logout-btn" id="logout">Sign Out</button>
+            </aside>
+
+            
+            
+            <!--footer-->
+            <footer>
+                <p>© 2025 The Snitch · America's Finest News Source</p>
+            </footer>
+
+        </div>
+
+        <script type="module" src="./main.js"></script>
+    </body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create / Edit Article</title>
+
+  <link rel="stylesheet" href="./create-article.css" />
+  <!-- same external libs you had -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/docx-preview@0.1.15/dist/docx-preview.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button id="backBtn" class="ghost">← Drafts</button>
+      <div class="meta">
+        <span id="status">Not saved</span>
+        <span id="lastSaved">—</span>
+        <button id="publishBtn" class="primary">Publish</button>
+      </div>
+    </header>
+
+    <div class="toolbar" id="toolbar" role="toolbar" aria-label="Editor toolbar">
+      <select id="fontSelect" title="Font family" class="styled-select">
+        <option value="Inter">Inter</option>
+        <option value="Arial">Arial</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+      </select>
+
+      <div class="custom-dropdown" id="fontSizeDropdown">
+        <button id="fontSizeBtn" class="styled-select">12pt ▾</button>
+        <div class="dropdown-menu" id="fontSizeMenu" aria-hidden="true">
+          <div class="size-grid">
+            <button class="size-item" data-size="10">10pt</button>
+            <button class="size-item" data-size="11">11pt</button>
+            <button class="size-item active" data-size="12">12pt</button>
+            <button class="size-item" data-size="14">14pt</button>
+            <button class="size-item" data-size="16">16pt</button>
+            <button class="size-item" data-size="18">18pt</button>
+            <button class="size-item" data-size="24">24pt</button>
+            <button class="size-item" data-size="32">32pt</button>
+            <button class="size-item" data-size="48">48pt</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <button class="tb" data-cmd="bold" title="Bold"><b>B</b></button>
+        <button class="tb" data-cmd="italic" title="Italic"><i>I</i></button>
+        <button class="tb" data-cmd="underline" title="Underline"><u>U</u></button>
+        <button class="tb" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+      </div>
+
+      <div class="group">
+        <button class="tb" data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+        <button class="tb" data-cmd="insertOrderedList" title="Numbered list">1.</button>
+      </div>
+
+      <div class="group">
+        <button class="tb" data-cmd="outdent" title="Outdent">◂</button>
+        <button class="tb" data-cmd="indent" title="Indent">▸</button>
+      </div>
+
+      <div class="group">
+        <button class="tb" data-cmd="justifyLeft" title="Align left">⟸</button>
+        <button class="tb" data-cmd="justifyCenter" title="Center">☰</button>
+        <button class="tb" data-cmd="justifyRight" title="Align right">⟹</button>
+      </div>
+
+      <button id="linkBtn" class="tb" title="Insert link">🔗</button>
+      <button id="supBtn" class="tb" title="Superscript">Xⁿ</button>
+      <button id="subBtn" class="tb" title="Subscript">Xₙ</button>
+
+      <div class="custom-dropdown" id="tableDropdown">
+        <button id="tableBtn" class="styled-select">Insert table ▾</button>
+        <div class="dropdown-menu" id="tableMenu" aria-hidden="true">
+          <div class="table-grid" id="tableGrid"></div>
+          <div class="grid-hint" id="gridHint">0 × 0</div>
+        </div>
+      </div>
+
+      <button id="undoBtn" class="tb" title="Undo">↶</button>
+      <button id="redoBtn" class="tb" title="Redo">↷</button>
+
+      <label class="file-label">Insert image
+        <input id="imageInput" type="file" accept="image/*" />
+      </label>
+
+      <label class="file-label">Import doc
+        <input id="docImport" type="file" accept=".docx,.html,.txt" />
+      </label>
+    </div>
+
+    <div class="image-upload" id="image-upload">
+      <label for="titleImage" class="file-label" id="drop-area">
+        <input type="file" id="titleImage" accept="image/*">
+        <span id="upload-text">Upload or Drop Title Image</span>
+      </label>
+      <div class="image-preview" id="image-preview" style="display:none;">
+        <img id="preview-img" alt="Preview">
+      </div>
+    </div>
+
+    <input id="titleInput" class="title-input" placeholder="Article title (separate box)" />
+
+    <main id="editor" class="editor" contenteditable="true" placeholder="Start your article here..."></main>
+  </div>
+
+  <script src="./create-article.js"></script>
+</body>
+</html>

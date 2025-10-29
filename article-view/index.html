@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Snitch — Article</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./article-view.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand" onclick="window.location.href='/'">
+          <h1>The Snitch</h1>
+        </div>
+      </header>
+
+      <main class="article-layout">
+        <section class="article-card">
+          <img id="titleImage" class="title-image" alt="Article image" style="display:none;" />
+          <h1 id="title" class="article-title">Loading...</h1>
+          <div class="meta">
+            <span id="author"></span>
+            <span id="date"></span>
+            <span id="views"></span>
+          </div>
+
+          <div id="article" class="article-body">
+            <p>Loading article content...</p>
+          </div>
+
+          <button id="returnHome" class="return-btn">← Return Home</button>
+        </section>
+      </main>
+
+      <footer>
+        <p>© 2025 The Snitch · America’s Finest News Source</p>
+      </footer>
+    </div>
+
+    <script type="module" src="./article-view.js"></script>
+  </body>
+</html>
