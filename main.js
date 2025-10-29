@@ -201,7 +201,7 @@ async function loadPublishedArticles() {
 
     if (!allArticles.length) {
       heroSection.innerHTML = ''
-      if (newsGrid) newsGrid.innerHTML = '<p class="no-results">No articles available.</p>'
+      if (newsGrid) newsGrid.innerHTML = '<p class="no-results">No articles found.</p>'
       return
     }
 
