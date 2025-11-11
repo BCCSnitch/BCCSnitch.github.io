@@ -82,7 +82,7 @@ async function loadMyDrafts() {
     try {
         const { data, error } = await supabase
             .from("articles_in_progress")
-            .select("id, html, updated_at, user_id")
+            .select("id, html, updated_at, user_id, title_image")
             .eq("user_id", currentUser.id)
             .order("updated_at", { ascending: false })
             .limit(200);
@@ -123,9 +123,10 @@ async function loadMyDrafts() {
             const removeBtn = item.querySelector('.remove-btn');
             removeBtn.addEventListener("click", async (e) => {
                 e.stopPropagation(); // Prevent opening the draft
-                
                 if (confirm('Are you sure you want to delete this draft?')) {
                     try {
+                        deleteArticleImages(d.html, "Images", d.title_image);
+
                         const { error } = await supabase
                             .from("articles_in_progress")
                             .delete()
@@ -269,3 +270,43 @@ refreshBtn.addEventListener("click", () => {
         otherBlock.style.display = "none";
     }
 })();
+
+async function deleteArticleImages(html, bucket = 'Images', title_image = null) {
+  if (!html) return
+
+  // Create a temporary div to parse HTML
+  const temp = document.createElement('div')
+  temp.innerHTML = html
+
+  // Get all <img> elements
+  const imgElements = Array.from(temp.querySelectorAll('img'))
+
+  if (imgElements.length === 0) return
+  console.log(imgElements);
+
+  // Extract bucket paths from src URLs
+  const pathsToDelete = imgElements
+    .map(img => {
+      try {
+        const url = new URL(img.src)
+        // Assuming the path after /bucket-name/ is the file path
+        const match = url.pathname.match(new RegExp(`/${bucket}/(.+)$`))
+        return match ? decodeURIComponent(match[1]) : null
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean) // Remove nulls
+
+  if (pathsToDelete.length === 0) return
+  if(title_image) pathsToDelete.push((title_image.match(/Images\/(.+)$/) || [])[1]);
+
+  // Delete files from Supabase Storage
+  const { data, error } = await supabase.storage.from(bucket).remove(pathsToDelete)
+
+  if (error) {
+    console.error('Error deleting images from storage:', error)
+  } else {
+    console.log('Deleted images:', pathsToDelete)
+  }
+}

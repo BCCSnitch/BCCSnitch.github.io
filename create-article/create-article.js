@@ -923,45 +923,92 @@ function autoLinkifyInEditor(){
 }
 
 /* -------------------- DOCX import (docx-preview) -------------------- */
-async function handleDocImport(file){
+async function hashBlob(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleDocImport(file) {
   if (!file) return;
   setStatus('Importing document...');
   const name = (file.name || '').toLowerCase();
+
   if (name.endsWith('.docx') && window.docx && typeof window.docx.renderAsync === 'function') {
     try {
+      const zip = await JSZip.loadAsync(file);
+      let mediaFiles = Object.keys(zip.files).filter(f => f.startsWith('word/media/'));
+      mediaFiles.sort();
+
       const container = document.createElement('div');
       await docx.renderAsync(file, container);
-      const html = container.innerHTML || '';
-      if (!html) throw new Error('No content produced by docx-preview');
+      if (!container.innerHTML) throw new Error('No content produced by docx-preview');
+
+      const imgs = Array.from(container.querySelectorAll('img'));
+      const hashMap = {};
+      let imgIndex = 0;
+
+      for (const mediaFile of mediaFiles) {
+        const blob = await zip.files[mediaFile].async('blob');
+        const hash = await hashBlob(blob);
+
+        if (hashMap[hash]) continue;
+
+        const baseName = mediaFile.split('/').pop();
+        const ext = baseName.split('.').pop().toLowerCase();
+        let type = 'application/octet-stream';
+        if (ext === 'png') type = 'image/png';
+        else if (ext === 'jpeg' || ext === 'jpg') type = 'image/jpeg';
+        else if (ext === 'gif') type = 'image/gif';
+        else if (ext === 'bmp') type = 'image/bmp';
+
+        if (imgIndex >= imgs.length) break;
+
+        const fileName = `${hash}.${ext}`;
+        const imageBlob = new Blob([blob], { type });
+
+        const { error: uploadErr } = await supabase.storage.from('Images').upload(fileName, imageBlob, { upsert: true });
+        if (uploadErr) {
+          console.error('Upload failed for', fileName, uploadErr);
+          continue;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('Images').getPublicUrl(fileName);
+        const publicUrl = publicUrlData?.publicUrl || '';
+
+        hashMap[hash] = publicUrl;
+        imgs[imgIndex].src = publicUrl;
+        imgIndex++;
+      }
+
       restoreSelection();
-      document.execCommand('insertHTML', false, html);
+      document.execCommand('insertHTML', false, container.innerHTML);
       scheduleQuickSave();
-      setStatus('Imported (.docx)');
+      setStatus('Imported (.docx with images, deduplicated)');
       return;
     } catch (err) {
-      console.error('docx-preview failed', err);
+      console.error('docx import failed', err);
+      alert('Import failed: ' + (err?.message || err));
+      setStatus('Import failed');
+      return;
     }
   }
+
   try {
-    if (name.endsWith('.html') || file.type === 'text/html') {
-      const txt = await file.text();
-      restoreSelection();
-      document.execCommand('insertHTML', false, txt);
-      setStatus('Imported (HTML)');
-    } else {
-      const txt = await file.text();
-      const wrapped = `<p>${escapeHtml(txt).replace(/\n+/g,'</p><p>')}</p>`;
-      restoreSelection();
-      document.execCommand('insertHTML', false, wrapped);
-      setStatus('Imported (text)');
-    }
+    const txt = await file.text();
+    const wrapped = `<p>${escapeHtml(txt).replace(/\n+/g, '</p><p>')}</p>`;
+    restoreSelection();
+    document.execCommand('insertHTML', false, wrapped);
     scheduleQuickSave();
+    setStatus('Imported (text/HTML)');
   } catch (err) {
     console.error('import fallback failed', err);
     alert('Import failed: ' + (err?.message || err));
     setStatus('Import failed');
   }
 }
+
 if (docImport) docImport.addEventListener('change', (ev) => { const f = ev.target.files?.[0]; if (f) handleDocImport(f).finally(()=> docImport.value=''); });
 
 /* -------------------- Auth, drafts, autosave & publish -------------------- */

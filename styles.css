@@ -208,7 +208,7 @@ nav a:hover, nav button:hover { color: var(--accent); }
 }
 
 .search-box input {
-  width: calc(100% - 1.6rem);
+  width: 100%;
   padding: 0.8rem;
   border-radius: var(--radius);
   border: none;
@@ -263,10 +263,9 @@ nav a:hover, nav button:hover { color: var(--accent); }
 
 .trending-title {
   flex: 1;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;   
+  white-space: normal;     
+  word-break: break-word; 
 }
 
 .trending-views {
