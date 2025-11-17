@@ -7,7 +7,7 @@
 /* -------------------- Configuration -------------------- */
 const SUPABASE_URL = "https://roqlhnyveyzjriawughf.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk";
-const IMAGE_BUCKET = "Images"; // per your request, capitalized
+const IMAGE_BUCKET = "Images";
 const supabase = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
 const AUTOSAVE_MS = 5000; // 5 seconds
 
@@ -226,7 +226,6 @@ function insertTypingSpanHtml(styleObj){
   const id = nowId('ts');
   const style = Object.entries(styleObj || {}).map(([k,v]) => `${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}:${v};`).join('');
   const html = `<span id="${id}" class="typing-span" style="${style}">\u200B</span>`;
-  // Use execCommand insert for compatibility (keeps your existing behavior)
   document.execCommand('insertHTML', false, html);
 
   const el = editor.querySelector(`#${id}`);
@@ -1030,7 +1029,6 @@ async function checkAuthAndRole() {
   return true;
 }
 
-/* Load / create draft (keeps behavior you had) */
 async function loadDraft() {
   if (!currentDraftId) {
     try {
@@ -1628,5 +1626,26 @@ async function handleImageUpload(file) {
   uploadText.textContent = '✅ Image Uploaded';
 }
 
-/* loadDraft, saveDraft, publishArticle, scheduleQuickSave already defined above - retained (not repeated to avoid duplication) */
-/* However they are present earlier in this file in the "Auth, drafts..." section. */
+editor.addEventListener("paste", (e) => {
+  e.preventDefault();
+
+  let html = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
+
+  const temp = document.createElement("div");
+  temp.style.display = "none";
+  temp.innerHTML = html;
+
+  function sanitizeColors(node) {
+    node.querySelectorAll("*").forEach(el => {
+      el.style.removeProperty("color");
+      el.style.removeProperty("background-color");
+      el.removeAttribute("color");
+      el.removeAttribute("bgcolor");
+      sanitizeColors(el);
+    });
+  }
+
+  sanitizeColors(temp);
+
+  document.execCommand("insertHTML", false, `<div style="color:white;">${temp.innerHTML}</div>`);
+});

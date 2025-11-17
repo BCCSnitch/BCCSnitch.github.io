@@ -101,14 +101,14 @@ body {
 }
 
 .editor {
-  min-height:60vh;
+  min-height: 60vh;
   max-height: 80vh;
-  background:var(--card);
-  padding:20px;
-  border-radius:var(--radius);
-  border:1px solid rgba(255,255,255,0.1);
-  color:var(--text);
-  outline:none;
+  background: var(--card);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text) !important;
+  outline: none;
   overflow-y: auto;
   overflow-x: hidden;
   white-space: pre-wrap;

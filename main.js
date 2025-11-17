@@ -1,5 +1,5 @@
 // =============================
-// main.js — The Snitch Homepage (final, uses your getHeroArticle/getTrending)
+// main.js — The Snitch Homepage
 // =============================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -13,8 +13,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 // === DOM Elements ===
 const loginBtn = document.getElementById('login')
 const accountBtn = document.getElementById('account')
-const createNewBtn = document.querySelector('.writeradmin')
-const adminDashboardBtn = document.querySelector('.admin')
+const createNewBtn = document.getElementById('writer')
+const adminDashboardBtn = document.getElementById('admin')
 const logoutBtn = document.getElementById('logout')
 const sidebar = document.getElementById('accountSidebar')
 const closeSidebar = document.getElementById('closeSidebar')
@@ -93,15 +93,17 @@ async function checkAuthAndRole() {
       .eq('user_id', user.id)
       .single()
 
-    if (profile?.role === 'Admin') {
-      adminDashboardBtn.style.display = ''
-      createNewBtn.style.display = ''
-    } else if (profile?.role === 'Writer') {
-      createNewBtn.style.display = ''
-      adminDashboardBtn.style.display = 'none'
-    } else {
-      adminDashboardBtn.style.display = 'none'
-      createNewBtn.style.display = 'none'
+    if(window.innerWidth >= 900) {
+      if (profile?.role === 'Admin') {
+        adminDashboardBtn.style.display = ''
+        createNewBtn.style.display = ''
+      } else if (profile?.role === 'Writer') {
+        createNewBtn.style.display = ''
+        adminDashboardBtn.style.display = 'none'
+      } else {
+        adminDashboardBtn.style.display = 'none'
+        createNewBtn.style.display = 'none'
+      }
     }
   } catch (err) {
     console.error('Error checking session/role:', err)
@@ -146,10 +148,10 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;')
 }
 
-// -----------------------------
-// Use the exact functions you provided for hero & trending
-// -----------------------------
 function getHeroArticle(articles) {
+  if(articles.length == 0) {
+    return null;
+  }
   let daysAgo = 7;
   let hero = null;
   while (!hero) {
@@ -166,6 +168,9 @@ function getHeroArticle(articles) {
 }
 
 function getTrending(articles) {
+  if(articles.length == 0) {
+    return null;
+  }
   let monthsAgo = 1;
   let trending = [];
   while (trending.length === 0) {
@@ -205,10 +210,7 @@ async function loadPublishedArticles() {
       return
     }
 
-    // get hero by your logic (past-week, expanding by 7 days until found)
     const heroArticle = getHeroArticle(allArticles)
-
-    // get trending by your logic (past-month expanding month-by-month until up to 5 found)
     const trending = getTrending(allArticles)
 
     // render hero (if found) and trending and grid
@@ -375,7 +377,6 @@ function setupSearch() {
   const onInput = () => {
     const query = (searchInput.value || '').trim().toLowerCase()
     if (!query) {
-      // when search cleared, re-run loadPublishedArticles to use your hero/trending logic
       renderHero(getHeroArticle(allArticles))
       renderTrending(getTrending(allArticles))
       // render grid excluding hero
@@ -462,6 +463,10 @@ async function init() {
   await checkAuthAndRole()
   await loadPublishedArticles()
   setupSearch()
+}
+
+function mobile(e) {
+
 }
 
 init()
