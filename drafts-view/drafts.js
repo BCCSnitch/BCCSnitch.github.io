@@ -162,6 +162,11 @@ async function loadOtherDrafts() {
             .order("updated_at", { ascending: false })
             .limit(200);
 
+        const { data: user } = await supabase
+            .from("profiles")
+            .select("id, display_name")
+        const profileMap = Object.fromEntries(user.map(u => [u.id, u.display_name]));
+
         if (error) throw error;
         otherDraftsEl.innerHTML = "";
         if (!data || data.length === 0) {
@@ -178,7 +183,7 @@ async function loadOtherDrafts() {
                     <div class="info">
                         <div class="title">${escapeHtml(title)}</div>
                         <div class="meta">
-                            ${escapeHtml(date)} • ${escapeHtml(d.user_id)}
+                            ${escapeHtml(date)} • ${escapeHtml(profileMap[d.user_id])}
                         </div>
                     </div>
                     <button class="remove-btn" title="Delete draft">Delete</button>
