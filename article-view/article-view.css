@@ -127,7 +127,6 @@ footer {
 }
 .title-image {
   width: 100%;
-  max-height: 420px;
   object-fit: cover;
   border-radius: var(--radius);
   margin-bottom: 1.5rem;

@@ -934,77 +934,39 @@ async function handleDocImport(file) {
   setStatus('Importing document...');
   const name = (file.name || '').toLowerCase();
 
-  if (name.endsWith('.docx') && window.docx && typeof window.docx.renderAsync === 'function') {
-    try {
-      const zip = await JSZip.loadAsync(file);
-      let mediaFiles = Object.keys(zip.files).filter(f => f.startsWith('word/media/'));
-      mediaFiles.sort();
-
-      const container = document.createElement('div');
-      await docx.renderAsync(file, container);
-      if (!container.innerHTML) throw new Error('No content produced by docx-preview');
-
-      const imgs = Array.from(container.querySelectorAll('img'));
-      const hashMap = {};
-      let imgIndex = 0;
-
-      for (const mediaFile of mediaFiles) {
-        const blob = await zip.files[mediaFile].async('blob');
-        const hash = await hashBlob(blob);
-
-        if (hashMap[hash]) continue;
-
-        const baseName = mediaFile.split('/').pop();
-        const ext = baseName.split('.').pop().toLowerCase();
-        let type = 'application/octet-stream';
-        if (ext === 'png') type = 'image/png';
-        else if (ext === 'jpeg' || ext === 'jpg') type = 'image/jpeg';
-        else if (ext === 'gif') type = 'image/gif';
-        else if (ext === 'bmp') type = 'image/bmp';
-
-        if (imgIndex >= imgs.length) break;
-
-        const fileName = `${hash}.${ext}`;
-        const imageBlob = new Blob([blob], { type });
-
-        const { error: uploadErr } = await supabase.storage.from('Images').upload(fileName, imageBlob, { upsert: true });
-        if (uploadErr) {
-          console.error('Upload failed for', fileName, uploadErr);
-          continue;
-        }
-
-        const { data: publicUrlData } = supabase.storage.from('Images').getPublicUrl(fileName);
-        const publicUrl = publicUrlData?.publicUrl || '';
-
-        hashMap[hash] = publicUrl;
-        imgs[imgIndex].src = publicUrl;
-        imgIndex++;
-      }
-
-      restoreSelection();
-      document.execCommand('insertHTML', false, container.innerHTML);
-      scheduleQuickSave();
-      setStatus('Imported (.docx with images, deduplicated)');
-      return;
-    } catch (err) {
-      console.error('docx import failed', err);
-      alert('Import failed: ' + (err?.message || err));
-      setStatus('Import failed');
-      return;
-    }
+  function escapeHtml(s){
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
   }
 
   try {
-    const txt = await file.text();
-    const wrapped = `<p>${escapeHtml(txt).replace(/\n+/g, '</p><p>')}</p>`;
-    restoreSelection();
-    document.execCommand('insertHTML', false, wrapped);
-    scheduleQuickSave();
-    setStatus('Imported (text/HTML)');
-  } catch (err) {
-    console.error('import fallback failed', err);
-    alert('Import failed: ' + (err?.message || err));
-    setStatus('Import failed');
+    let html = '';
+
+    if (/\.txt$/i.test(name)) {
+      const text = await file.text();
+      html = `<div>${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
+    } else if (/\.docx$/i.test(name)) {
+      if (window.mammoth && window.mammoth.convertToHtml) {
+        const buf = await file.arrayBuffer();
+        const r = await window.mammoth.convertToHtml({ arrayBuffer: buf });
+        html = r.value || '';
+      } else {
+        throw new Error('DOCX requires mammoth.js');
+      }
+    } else {
+      throw new Error('Unsupported file type');
+    }
+
+    const clean = sanitize(html);
+    setStatus(`Imported ${file.name}`);
+    return clean;
+  } catch (e) {
+    setStatus('Failed to import document');
+    throw e;
   }
 }
 
@@ -1146,6 +1108,12 @@ function scheduleImmediateSave(){ setTimeout(()=>saveDraft(), 90); }
 setInterval(()=>saveDraft(), AUTOSAVE_MS);
 window.addEventListener('beforeunload', ()=>{ try { saveDraft(); } catch(_) {} });
 
+async function publisher() {
+  alert('the current solution is temporary while a better one is in progress');
+  const { data } = await supabase.from('profiles').select('id').eq('display_name', prompt('Who is the publisher? (First and Last Name or name on the google account they used to create their profile)'))
+  return data[0].id;
+}
+
 async function publishArticle() {
   try {
     await saveDraft();
@@ -1158,7 +1126,7 @@ async function publishArticle() {
       {
         created_at: new Date().toISOString(),
         visits: 0,
-        user_id: currentUser.id,
+        user_id: await publisher(),
         html: savedHtml,
         title_image: window.titleImage,
       },
@@ -1626,16 +1594,7 @@ async function handleImageUpload(file) {
   uploadText.textContent = '✅ Image Uploaded';
 }
 
-editor.addEventListener("paste", (e) => {
-  e.preventDefault();
-
-  let html = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
-
-  const temp = document.createElement("div");
-  temp.style.display = "none";
-  temp.innerHTML = html;
-
-  function sanitizeColors(node) {
+function sanitizeColors(node) {
     node.querySelectorAll("*").forEach(el => {
       el.style.removeProperty("color");
       el.style.removeProperty("background-color");
@@ -1643,9 +1602,70 @@ editor.addEventListener("paste", (e) => {
       el.removeAttribute("bgcolor");
       sanitizeColors(el);
     });
+}
+
+async function sanitize(html) {
+  console.log(window.getSelection());
+  restoreSelection()
+  const temp = document.createElement("div");
+  temp.style.display = "none";
+  temp.innerHTML = html;
+  sanitizeColors(temp);
+  restoreSelection()
+
+  const imgs = Array.from(temp.querySelectorAll("img"));
+  const hashMap = {};
+  let imgIndex = 0;
+
+  for (const img of imgs) {
+    try {
+      const src = img.src;
+      if (!src.startsWith("data:")) continue; // skip non-inline images
+
+      // convert data URL to Blob
+      const res = await fetch(src);
+      const blob = await res.blob();
+
+      // hash to deduplicate
+      const hash = await hashBlob(blob);
+      if (hashMap[hash]) {
+        img.src = hashMap[hash];
+        continue;
+      }
+
+      // detect mime type from blob type
+      let type = blob.type || "application/octet-stream";
+      let ext = type.split("/")[1] || "bin";
+
+      const fileName = `${hash}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("Images")
+        .upload(fileName, blob, { upsert: true });
+
+      if (uploadErr) {
+        console.error("Upload failed for", fileName, uploadErr);
+        continue;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("Images")
+        .getPublicUrl(fileName);
+
+      const publicUrl = publicUrlData?.publicUrl || "";
+      hashMap[hash] = publicUrl;
+      img.src = publicUrl;
+      imgIndex++;
+    } catch (err) {
+      console.error("Image processing failed", err);
+    }
   }
 
-  sanitizeColors(temp);
-
   document.execCommand("insertHTML", false, `<div style="color:white;">${temp.innerHTML}</div>`);
+  scheduleQuickSave();
+}
+
+editor.addEventListener("paste", (e) => {
+  e.preventDefault();
+  let html = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
+  sanitize(html);
 });

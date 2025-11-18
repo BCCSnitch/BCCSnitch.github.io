@@ -244,7 +244,7 @@ function renderHero(heroArticle) {
     </div>
     <div class="hero-text" onclick="window.location.href='/article-view/?id=${heroArticle.id}'">
       <h2>${title}</h2>
-      <div class="meta">${formattedDate(heroArticle)} · ${heroArticle.visits || 0} views</div>
+      <div class="meta">${heroArticle.author_name} · ${formattedDate(heroArticle)} · ${heroArticle.visits || 0} views</div>
     </div>
   `
 }
@@ -326,7 +326,7 @@ async function renderMasonry(items) {
       </div>
       <div class="card-content">
         <h3>${escapeHtml(extractTitle(article.html))}</h3>
-        <div class="meta">${formattedDate(article)} · ${article.visits || 0} views</div>
+        <div class="meta"> ${article.author_name} · ${formattedDate(article)} · ${article.visits || 0} views</div>
       </div>
     `
     cols[minIdx].el.appendChild(card)
@@ -463,10 +463,6 @@ async function init() {
   await checkAuthAndRole()
   await loadPublishedArticles()
   setupSearch()
-}
-
-function mobile(e) {
-
 }
 
 init()
