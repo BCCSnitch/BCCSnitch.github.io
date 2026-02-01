@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard - The Snitch</title>
+    <title>The Snitch</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="/admin-dashboard/admin.css">
+    <link rel="stylesheet" href="/bet/bet.css">
   </head>
   <body>
     <div id="outerContainer" class="container">
@@ -18,45 +18,34 @@
           <div class="brand"><h1>The Snitch</h1></div>
           <nav id="nav">
             <button onclick="window.location.href='/'">Home</button>
+            <button id="createBetBtn" onclick="window.location.href='/bet/create-bet/'" style="display:none;">Create Bet</button>
             <button id="account">Account</button>
             <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
-              <img src="/instagramIcon.png" alt="Instagram Link">
+              <img src = /instagramIcon.png alt = "Instagram Link">
             </a>
           </nav>
         </header>
 
         <main class="layout single-column">
           <section class="main-content">
-            <div class="admin-hero">
-              <div class="icon">⚙️</div>
-              <h2>Admin Dashboard</h2>
-              <p class="subtitle">Manage user permissions</p>
+            <div class="bet-hero">
+              <div class="icon">🎲</div>
+              <h2>Poly(wog) Market</h2>
+              <p class="subtitle">It's not actually gambling if it's not for real money</p>
             </div>
 
-            <div class="admin-card">
-              <h3>Add New User</h3>
-              <div class="add-user-form">
-                <input type="email" id="emailInput" placeholder="Enter user email..." />
-                <select id="roleSelect">
-                  <option value="Writer">Writer</option>
-                  <option value="Admin">Admin</option>
-                </select>
-                <button id="addUserBtn" class="btn-primary">Add Role</button>
+            <div class="wallet-card">
+              <div>
+                <div class="wallet-label">Your Balance</div>
+                <div id="balance" class="wallet-balance">$0</div>
               </div>
             </div>
 
-            <div class="admin-card">
-              <h3>Admins</h3>
-              <ul class="user-list" id="adminList">
-                <li class="empty-state">Loading admins...</li>
-              </ul>
-            </div>
-
-            <div class="admin-card">
-              <h3>Writers</h3>
-              <ul class="user-list" id="writerList">
-                <li class="empty-state">Loading writers...</li>
-              </ul>
+            <div class="markets-section">
+              <h3>Open Markets</h3>
+              <div id="marketsList">
+                <p class="loading-text">Loading markets…</p>
+              </div>
             </div>
           </section>
         </main>
@@ -76,6 +65,6 @@
       </div>
     </div>
 
-    <script type="module" src="/admin-dashboard/admin.js"></script>
+    <script type="module" src="/bet/bet.js"></script>
   </body>
 </html>

@@ -1,8 +1,10 @@
+// Supabase config
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+// DOM elements
 const titleEl = document.getElementById('title')
 const authorEl = document.getElementById('author')
 const dateEl = document.getElementById('date')
@@ -28,7 +30,6 @@ if (!articleId) {
   throw new Error('Missing ?id= parameter in URL')
 }
 
-// --- Load Article for everyone ---
 async function loadArticle() {
   try {
     const { data: article, error } = await supabase
@@ -67,12 +68,10 @@ async function loadArticle() {
   }
 }
 
-// --- Increment views ---
 async function incrementViews(id) {
   await supabase.rpc('increment_views', { article_id: parseInt(id) })
 }
 
-// --- Extract title ---
 function extractAndCleanArticle(html) {
   const temp = document.createElement('div')
   temp.innerHTML = html
@@ -82,7 +81,6 @@ function extractAndCleanArticle(html) {
   return { title, cleanedHtml: temp.innerHTML }
 }
 
-// --- Check if admin and render delete ---
 async function checkAdminAndRenderDelete(articleId) {
   try {
     const { data: sessionData } = await supabase.auth.getSession()
@@ -91,16 +89,14 @@ async function checkAdminAndRenderDelete(articleId) {
 
     currentUser = session.user
 
-    // Check user_roles table
     const { data: rolesData, error: rolesErr } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', currentUser.id)
 
     if (rolesErr || !rolesData) return
-    if (!rolesData.some(r => r.role === 'Admin')) return // not admin
+    if (!rolesData.some(r => r.role === 'Admin')) return
 
-    // Render delete button
     const deleteBtn = document.createElement('button')
     deleteBtn.textContent = 'Delete Article'
     deleteBtn.className = 'return-btn'
@@ -171,5 +167,4 @@ async function deleteArticleImages(html, bucket = 'Images', title_image = null) 
   }
 }
 
-// --- INIT ---
 loadArticle()

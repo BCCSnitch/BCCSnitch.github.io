@@ -1,14 +1,10 @@
-/* drafts.js
-   - lists current user's drafts
-   - if user is Admin, lists other users' drafts in second column
-   - Create New immediately inserts a draft and opens editor
-   - Uses example Supabase project/key (anon)
-*/
+// Supabase config
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = "https://roqlhnyveyzjriawughf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// DOM elements
 const myDraftsEl = document.getElementById("myDrafts");
 const otherDraftsEl = document.getElementById("otherDrafts");
 const otherBlock = document.getElementById("otherBlock");
@@ -17,9 +13,8 @@ const refreshBtn = document.getElementById("refreshBtn");
 const msgEl = document.getElementById("msg");
 
 let currentUser = null;
-let userRole = null; // 'Writer' | 'Admin' | null
+let userRole = null;
 
-// helper to escape HTML in small places
 function escapeHtml(s = "") {
     return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Snitch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/bet/create-bet/create-bet.css">
+  </head>
+  <body>
+    <div id="outerContainer" class="container">
+      <div id="innerContainer" class="container">
+        <header>
+          <div class="brand"><h1>The Snitch</h1></div>
+          <nav id="nav">
+            <button onclick="window.location.href='/bet/'">Market</button>
+            <button id="account">Account</button>
+            <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
+              <img src = /instagramIcon.png alt = "Instagram Link">
+            </a>
+          </nav>
+        </header>
+
+        <main class="layout single-column">
+          <section class="main-content">
+            <div class="create-hero">
+              <div class="icon">🎲</div>
+              <h2>Create A Market</h2>
+              <p class="subtitle">Set up a new prediction market for the community to bet on.</p>
+            </div>
+
+            <div id="formWrap" class="form-card">
+              <h3>New Market Details</h3>
+              <form id="createForm" class="create-form">
+                <div class="form-group">
+                  <label for="title">Market Title</label>
+                  <input id="title" placeholder="e.g., Will the basketball team win on Friday?" required />
+                </div>
+                <div class="form-group">
+                  <label>Outcomes</label>
+                  <div id="outcomesContainer">
+                    <div class="option-row">
+                      <input class="outcome-input" type="text" placeholder="Option 1" required />
+                      <button type="button" class="remove-option-btn">×</button>
+                    </div>
+                    <div class="option-row">
+                      <input class="outcome-input" type="text" placeholder="Option 2" required />
+                      <button type="button" class="remove-option-btn">×</button>
+                    </div>
+                  </div>
+                  <button type="button" id="addOptionBtn" class="btn-secondary">Add Option</button>
+                </div>
+                <div class="form-group">
+                  <label>Deadline</label>
+                  <div class="deadline-row">
+                    <input id="deadlineDate" type="date" required />
+                    <div class="time-picker">
+                      <input id="deadlineHour" type="number" min="1" max="12" placeholder="12" required />
+                      <span class="time-separator">:</span>
+                      <input id="deadlineMinute" type="number" min="0" max="59" placeholder="00" required />
+                      <select id="deadlineAmPm">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary">Create Market</button>
+              </form>
+              <div id="status"></div>
+            </div>
+
+          </section>
+        </main>
+
+        <div id="overlay" class="overlay"></div>
+        <aside class="account-sidebar" id="accountSidebar">
+          <button class="close-btn" id="closeSidebar">×</button>
+          <div class="account-header">
+            <img id="avatar" alt="User Avatar" class="avatar">
+            <h2>My Account</h2>
+            <p class="email" id="userEmail"></p>
+          </div>
+          <button class="logout-btn" id="logout">Sign Out</button>
+        </aside>
+
+        <footer><p>© 2025 The Snitch · America's Finest News Source</p></footer>
+      </div>
+    </div>
+
+    <script type="module" src="/bet/create-bet/create-bet.js"></script>
+  </body>
+</html>

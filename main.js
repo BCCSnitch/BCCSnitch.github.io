@@ -1,16 +1,13 @@
-// =============================
-// main.js — The Snitch Homepage
-// =============================
-
-// === Supabase Setup ===
+// Supabase config
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-// === DOM Elements ===
+// DOM elements
 const loginBtn = document.getElementById('login')
 const accountBtn = document.getElementById('account')
+const marketBtn = document.getElementById('market')
 const createNewBtn = document.getElementById('writer')
 const adminDashboardBtn = document.getElementById('admin')
 const logoutBtn = document.getElementById('logout')
@@ -23,7 +20,6 @@ const heroSection = document.querySelector('.hero')
 const trendingList = document.querySelector('.trending ul')
 const searchInput = document.querySelector('.search-box input')
 
-// overlay fallback
 let overlay = document.querySelector('.overlay')
 if (!overlay) {
   overlay = document.createElement('div')
@@ -31,15 +27,14 @@ if (!overlay) {
   document.body.appendChild(overlay)
 }
 
-// global cache
 let allArticles = []
+let currentPage = 0
+const PAGE_SIZE = 20
+let isLoading = false
+let hasMore = true
 
-// show loading state immediately
 if (newsGrid) newsGrid.innerHTML = '<p class="no-results">Loading articles...</p>'
 
-// -----------------------------
-// Sidebar events & auth helpers
-// -----------------------------
 function setupSidebarEvents() {
   accountBtn?.addEventListener('click', () => {
     sidebar.classList.add('open')
@@ -75,6 +70,7 @@ async function checkAuthAndRole() {
     if (!user) {
       loginBtn.style.display = ''
       accountBtn.style.display = 'none'
+      marketBtn.style.display = 'none'
       adminDashboardBtn.style.display = 'none'
       createNewBtn.style.display = 'none'
       return
@@ -82,6 +78,7 @@ async function checkAuthAndRole() {
 
     loginBtn.style.display = 'none'
     accountBtn.style.display = ''
+    marketBtn.style.display = ''
     userEmail.textContent = user.email
     avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
 
@@ -108,12 +105,8 @@ async function checkAuthAndRole() {
   }
 }
 
-// -----------------------------
-// Helpers
-// -----------------------------
 function formattedDate(article) {
   if (!article?.created_at) return ''
-  // support ISO with time or plain date
   const dateStr = article.created_at.split('T')[0]
   const [year, month, day] = dateStr.split('-')
   return `${month}/${day}/${year}`
@@ -124,16 +117,6 @@ function extractTitle(html) {
   temp.innerHTML = html || ''
   const h1 = temp.querySelector('h1')
   return h1 ? h1.textContent.trim() : 'Untitled'
-}
-
-function extractPreview(html) {
-  const temp = document.createElement('div')
-  temp.innerHTML = html || ''
-  const h1 = temp.querySelector('h1')
-  if (h1) h1.remove()
-  let text = temp.textContent || temp.innerText || ''
-  text = text.replace(/\s+/g, ' ').trim()
-  return text
 }
 
 function escapeHtml(str) {
@@ -184,23 +167,22 @@ function getTrending(articles) {
   return trending;
 }
 
-// -----------------------------
-// Load articles & trending (uses getHeroArticle/getTrending)
- // -----------------------------
 async function loadPublishedArticles() {
   try {
-    // show loading while fetching
     if (newsGrid) newsGrid.innerHTML = '<p class="no-results">Loading articles...</p>'
 
     const { data: articles, error } = await supabase
       .from('articles')
-      .select('*')
+      .select('id, html, title_image, created_at, visits, editors')
       .not('html', 'is', null)
       .order('created_at', { ascending: false })
+      .range(0, PAGE_SIZE - 1)
 
     if (error) throw error
 
     allArticles = articles || []
+    currentPage = 1
+    hasMore = articles?.length === PAGE_SIZE
 
     if (!allArticles.length) {
       heroSection.innerHTML = ''
@@ -211,14 +193,13 @@ async function loadPublishedArticles() {
     const heroArticle = getHeroArticle(allArticles)
     const trending = getTrending(allArticles)
 
-    // render hero (if found) and trending and grid
     renderHero(heroArticle)
     renderTrending(trending)
 
-    // render grid: show remaining articles (skip hero if present)
-    // We want a grid of articles with hero excluded (heroArticle may be in allArticles[0] or elsewhere)
     const remaining = allArticles.filter(a => a.id !== heroArticle.id)
     await renderMasonry(remaining)
+    
+    setupInfiniteScroll()
   } catch (err) {
     console.error('Error loading articles:', err)
     if (newsGrid) newsGrid.innerHTML = '<p class="no-results">Error loading articles.</p>'
@@ -226,9 +207,62 @@ async function loadPublishedArticles() {
   }
 }
 
-// -----------------------------
-// Render hero/trending
-// -----------------------------
+async function loadMoreArticles() {
+  if (isLoading || !hasMore) return
+  isLoading = true
+
+  try {
+    const start = currentPage * PAGE_SIZE
+    const end = start + PAGE_SIZE - 1
+
+    const { data: articles, error } = await supabase
+      .from('articles')
+      .select('id, html, title_image, created_at, visits, editors')
+      .not('html', 'is', null)
+      .order('created_at', { ascending: false })
+      .range(start, end)
+
+    if (error) throw error
+
+    if (!articles || articles.length === 0) {
+      hasMore = false
+      return
+    }
+
+    hasMore = articles.length === PAGE_SIZE
+    currentPage++
+    
+    allArticles = [...allArticles, ...articles]
+    
+    const heroArticle = getHeroArticle(allArticles)
+    const existingIds = new Set([...newsGrid.querySelectorAll('.news-card')].map(c => c.getAttribute('onclick')?.match(/id=(\d+)/)?.[1]))
+    const newArticles = articles.filter(a => a.id !== heroArticle?.id && !existingIds.has(String(a.id)))
+    
+    if (newArticles.length > 0) {
+      await appendToMasonry(newArticles)
+    }
+  } catch (err) {
+    console.error('Error loading more articles:', err)
+  } finally {
+    isLoading = false
+  }
+}
+
+function setupInfiniteScroll() {
+  const container = document.getElementById('outerContainer')
+  if (!container) return
+
+  container.addEventListener('scroll', () => {
+    const scrollTop = container.scrollTop
+    const scrollHeight = container.scrollHeight
+    const clientHeight = container.clientHeight
+    
+    if (scrollTop + clientHeight >= scrollHeight - 500) {
+      loadMoreArticles()
+    }
+  })
+}
+
 function renderHero(heroArticle) {
   if (!heroArticle) {
     heroSection.innerHTML = ''
@@ -262,23 +296,17 @@ function renderTrending(trending) {
     `).join('')
 }
 
-// -----------------------------
-// Masonry renderer (balances heights)
-// -----------------------------
 async function renderMasonry(items) {
   if (!newsGrid) return
 
-  // clear container
   newsGrid.innerHTML = ''
 
-  // compute responsive column count
   const containerWidth = newsGrid.clientWidth || newsGrid.getBoundingClientRect().width || window.innerWidth
   const COL_MIN = 300 // px minimum desired column width
   const GAP = 24
   let columns = Math.max(1, Math.floor(containerWidth / (COL_MIN + GAP)))
-  columns = Math.min(columns, 4) // cap at 4 columns
+  columns = Math.min(columns, 4)
 
-  // create columns
   const cols = []
   for (let i = 0; i < columns; i++) {
     const col = document.createElement('div')
@@ -287,22 +315,17 @@ async function renderMasonry(items) {
     cols.push({ el: col, height: 0 })
   }
 
-  // preload images to estimate aspect ratios
   const itemsWithRatios = await estimateImageRatios(items)
 
-  // approximate constant overhead for non-image parts of the card
-  const CONTENT_OVERHEAD = 84 // px (title + meta + padding) — tweakable
+  const CONTENT_OVERHEAD = 84
 
-  // compute actual column width (account for gaps)
   const totalGapWidth = GAP * (columns - 1)
   const columnWidth = (containerWidth - totalGapWidth) / columns
 
-  // greedy placement
   for (const { item, ratio } of itemsWithRatios) {
     const estImgHeight = ratio && ratio > 0 ? Math.round(columnWidth * ratio) : Math.round(columnWidth * 0.66)
     const estimatedCardHeight = estImgHeight + CONTENT_OVERHEAD
 
-    // pick shortest column
     let minIdx = 0
     let minHeight = cols[0].height
     for (let i = 1; i < cols.length; i++) {
@@ -332,9 +355,6 @@ async function renderMasonry(items) {
   }
 }
 
-// -----------------------------
-// Image preloader to compute ratios
-// -----------------------------
 function estimateImageRatios(items) {
   const placeholder = 'https://placehold.co/600x400?text=No+Image'
   const promises = items.map(item => {
@@ -354,7 +374,6 @@ function estimateImageRatios(items) {
         resolve({ item, ratio: 0.75 })
       }
       img.src = src
-      // safety timeout
       setTimeout(() => {
         if (!settled) {
           settled = true
@@ -366,9 +385,57 @@ function estimateImageRatios(items) {
   return Promise.all(promises)
 }
 
-// -----------------------------
-// Search: hero hides, trending + search bar remain
-// -----------------------------
+async function appendToMasonry(items) {
+  if (!newsGrid || !items.length) return
+
+  const columns = newsGrid.querySelectorAll('.news-column')
+  if (!columns.length) return
+
+  const cols = Array.from(columns).map(el => ({
+    el,
+    height: el.getBoundingClientRect().height
+  }))
+
+  const itemsWithRatios = await estimateImageRatios(items)
+  const containerWidth = newsGrid.clientWidth || window.innerWidth
+  const GAP = 24
+  const totalGapWidth = GAP * (cols.length - 1)
+  const columnWidth = (containerWidth - totalGapWidth) / cols.length
+  const CONTENT_OVERHEAD = 84
+
+  for (const { item, ratio } of itemsWithRatios) {
+    const estImgHeight = ratio && ratio > 0 ? Math.round(columnWidth * ratio) : Math.round(columnWidth * 0.66)
+    const estimatedCardHeight = estImgHeight + CONTENT_OVERHEAD
+
+    let minIdx = 0
+    let minHeight = cols[0].height
+    for (let i = 1; i < cols.length; i++) {
+      if (cols[i].height < minHeight) {
+        minIdx = i
+        minHeight = cols[i].height
+      }
+    }
+
+    const article = item
+    const imgSrc = article.title_image || 'https://placehold.co/600x400?text=No+Image'
+    const card = document.createElement('div')
+    card.className = 'news-card'
+    card.setAttribute('role', 'article')
+    card.setAttribute('onclick', `window.location.href='/article-view/?id=${article.id}'`)
+    card.innerHTML = `
+      <div class="card-image">
+        <img src="${imgSrc}" alt="${escapeHtml(extractTitle(article.html))}">
+      </div>
+      <div class="card-content">
+        <h3>${escapeHtml(extractTitle(article.html))}</h3>
+        <div class="meta"> ${article.editors || "Anonymous"} · ${formattedDate(article)} · ${article.visits || 0} views</div>
+      </div>
+    `
+    cols[minIdx].el.appendChild(card)
+    cols[minIdx].height += estimatedCardHeight
+  }
+}
+
 function setupSearch() {
   if (!searchInput) return
 
@@ -377,20 +444,16 @@ function setupSearch() {
     if (!query) {
       renderHero(getHeroArticle(allArticles))
       renderTrending(getTrending(allArticles))
-      // render grid excluding hero
       const remaining = allArticles.filter(a => a.id !== getHeroArticle(allArticles).id)
       renderMasonry(remaining)
       return
     }
 
-    // when searching: hide hero
     heroSection.innerHTML = ''
 
-    // smart search: title OR preview
     const results = allArticles.filter(a => {
       const title = extractTitle(a.html).toLowerCase()
-      const preview = extractPreview(a.html).toLowerCase()
-      return title.includes(query) || preview.includes(query)
+      return title.includes(query)
     })
 
     if (!results.length) {
@@ -398,7 +461,6 @@ function setupSearch() {
       return
     }
 
-    // render results as masonry (hide hero)
     renderMasonry(results)
   }
 
@@ -406,9 +468,6 @@ function setupSearch() {
   searchInput.addEventListener('input', deb)
 }
 
-// -----------------------------
-// Debounce helper / resize reflow
-// -----------------------------
 function debounce(fn, wait = 100) {
   let t
   return (...args) => {
@@ -420,7 +479,6 @@ function debounce(fn, wait = 100) {
 const onResizeReflow = debounce(() => {
   const query = (searchInput?.value || '').trim().toLowerCase()
   if (!query) {
-    // restore normal view using hero/trending logic
     const hero = getHeroArticle(allArticles)
     renderHero(hero)
     renderTrending(getTrending(allArticles))
@@ -429,8 +487,7 @@ const onResizeReflow = debounce(() => {
   } else {
     const filtered = allArticles.filter(a => {
       const title = extractTitle(a.html).toLowerCase()
-      const preview = extractPreview(a.html).toLowerCase()
-      return title.includes(query) || preview.includes(query)
+      return title.includes(query)
     })
     if (!filtered.length) {
       newsGrid.innerHTML = '<p class="no-results">No articles found.</p>'
@@ -442,9 +499,6 @@ const onResizeReflow = debounce(() => {
 
 window.addEventListener('resize', onResizeReflow)
 
-// -----------------------------
-// Events & init
-// -----------------------------
 loginBtn?.addEventListener('click', async () => {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -455,7 +509,6 @@ loginBtn?.addEventListener('click', async () => {
 adminDashboardBtn?.addEventListener('click', () => window.location.href = '/admin-dashboard/')
 createNewBtn?.addEventListener('click', () => window.location.href = '/drafts-view/')
 
-// Initialize
 async function init() {
   setupSidebarEvents()
   await checkAuthAndRole()

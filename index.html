@@ -1,34 +1,15 @@
 <!doctype html>
 <html lang="en">
-
-    <!--
-        ========================================================================
-        THE SNITCH — SATIRICAL NEWS WEBSITE
-        ------------------------------------------------------------------------
-        This HTML document builds a simple single-page news-style website inspired
-        by The Onion. It uses only HTML, CSS, and a little JavaScript.
-
-        The comments here are extremely detailed so that even someone with almost
-        no HTML experience can understand what every tag, attribute, and style does.
-        ========================================================================
-    -->
-
     <head>
-        <!-- important for search results -->
         <link rel="canonical" href="https://bccsnitch.com/" />
-        <!-- The head contains metadata — information *about* the webpage, not what is displayed -->
-        <meta charset="utf-8"> <!-- Defines character encoding so all letters/symbols display properly -->
-        <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Makes page adjust to phone/tablet sizes -->
-        <title>The Snitch</title> <!-- The title appears in the browser tab -->
-
-        <!-- Google Fonts: importing 'Inter' for clean, readable text -->
-        <link rel="preconnect" href="https://fonts.googleapis.com"> <!-- Prepares connection to Google Fonts for faster loading -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>The Snitch</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-        <!-- Internal CSS styles — these control how everything looks -->
         <link rel="stylesheet" href="/styles.css">
         <link rel="icon" type="image/png" href="/favicon.png">
-
     </head>
 
     <body>
@@ -40,49 +21,44 @@
                     </div>
                     <nav id="nav">
                         <button id="login">Log In</button>
-                        <button id="account" style="display: none;">Account</button>
                         <button id="admin" style="display: none;">Admin Dashboard</button>
                         <button id="writer" style="display: none;">Create New Article</button>
+                        <button id="market" style="display: none;" onclick="window.location.href='/bet/'">Market</button>
+                        <button id="account" style="display: none;">Account</button>
                         <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
-                            <img src = /instagramIcon.png alt = "Instagram Link">
+                            <img src="/instagramIcon.png" alt="Instagram Link">
                         </a>
                     </nav>
                 </header>
             
-                <main class="layout"> 
-                    <section class="main-content"> 
-                        <!-- Hero Story --> 
-                        <div class="hero"> </div> 
-                        <!-- Grid of News --> 
-                        <div class="news-grid"></div> 
-                    </section> 
-                    <!-- Search + Trending --> 
-                    <aside class="sidebar"> 
-                        <div class="search-box"> 
-                            <input id = 'search-box-input' type="text" placeholder="Search headlines..."> 
-                        </div> 
-                        <div class="trending"> 
-                            <h3>Trending</h3> 
-                            <ul></ul> 
-                        </div> 
-                    </aside> 
+                <main class="layout">
+                    <section class="main-content">
+                        <div class="hero"></div>
+                        <div class="news-grid"></div>
+                    </section>
+                    <aside class="sidebar">
+                        <div class="search-box">
+                            <input id="search-box-input" type="text" placeholder="Search headlines...">
+                        </div>
+                        <div class="trending">
+                            <h3>Trending</h3>
+                            <ul></ul>
+                        </div>
+                    </aside>
                 </main>
 
-                <!--sidebar-->
                 <div id="overlay" class="overlay"></div>
 
                 <aside class="account-sidebar" id="accountSidebar">
                     <button class="close-btn" id="closeSidebar">×</button>
-                    
                     <div class="account-header">
-                        <img id = "avatar" alt="User Avatar" class="avatar">
+                        <img id="avatar" alt="User Avatar" class="avatar">
                         <h2>My Account</h2>
                         <p class="email" id="userEmail"></p>
                     </div>
                     <button class="logout-btn" id="logout">Sign Out</button>
                 </aside>
             
-                <!--footer-->
                 <footer>
                     <p>© 2025 The Snitch · America's Finest News Source</p>
                 </footer>

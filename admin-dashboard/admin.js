@@ -1,29 +1,59 @@
-// Initialize Supabase
+// Supabase config
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+// DOM elements
 const emailInput = document.getElementById("emailInput");
 const roleSelect = document.getElementById("roleSelect");
 const addUserBtn = document.getElementById("addUserBtn");
 const adminList = document.getElementById("adminList");
 const writerList = document.getElementById("writerList");
+const accountBtn = document.getElementById('account')
+const sidebar = document.getElementById('accountSidebar')
+const closeSidebar = document.getElementById('closeSidebar')
+const overlay = document.getElementById('overlay')
+const logoutBtn = document.getElementById('logout')
+const userEmail = document.getElementById('userEmail')
+const avatar = document.getElementById('avatar')
 
-// Check if the current user is an admin
+function setupSidebarEvents() {
+  accountBtn?.addEventListener('click', () => {
+    sidebar.classList.add('open')
+    overlay.classList.add('active')
+  })
+
+  closeSidebar?.addEventListener('click', () => {
+    sidebar.classList.remove('open')
+    overlay.classList.remove('active')
+  })
+
+  overlay?.addEventListener('click', () => {
+    sidebar.classList.remove('open')
+    overlay.classList.remove('active')
+  })
+
+  logoutBtn?.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
+      sidebar.classList.remove('open')
+      overlay.classList.remove('active')
+      window.location.href = '/'
+    }
+  })
+}
+
 async function checkAdminAccess() {
   const { data: user } = await supabase.auth.getSession();
   if (!user.session?.user) {
-    console.log("true");
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: "/"
-        }
-    })
-    if (error) console.error('Login error:', error)
+    window.location.href = "/";
     return;
   }
+  
+  userEmail.textContent = user.session.user.email
+  avatar.src = user.session.user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
+  
   const { data, error: queryError } = await supabase.from("user_roles").select("*").eq("user_id",user.session.user.id).single();
   console.log(data);
   if (queryError || !data || data.role !== "Admin") {
@@ -65,9 +95,15 @@ async function fetchUsers() {
       adminList.appendChild(li);
     }
   });
+
+  if (!adminList.hasChildNodes()) {
+    adminList.innerHTML = '<li class="empty-message">No admins</li>';
+  }
+  if (!writerList.hasChildNodes()) {
+    writerList.innerHTML = '<li class="empty-message">No writers</li>';
+  }
 }
 
-// Add user
 async function addUser() {
   const email = emailInput.value.trim();
   const role = roleSelect.value;
@@ -87,7 +123,6 @@ async function addUser() {
   }
 }
 
-// Remove writer
 async function removeWriter(id) {
   if (!confirm("Are you sure you want to remove this writer?")) return;
   const { error } = await supabase.from("user_roles").delete().eq("id", id);
@@ -111,4 +146,5 @@ async function removeAdmin(id) {
 }
 
 addUserBtn.addEventListener("click", addUser);
+setupSidebarEvents();
 checkAdminAccess();

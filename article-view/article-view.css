@@ -22,7 +22,6 @@ html, body {
   padding: 20px;
 }
 
-/* HEADER */
 header {
   display: flex;
   justify-content: center;
@@ -38,7 +37,6 @@ header {
   text-align: center;
 }
 
-/* ARTICLE */
 .article-layout {
   display: flex;
   justify-content: center;
@@ -104,7 +102,6 @@ header {
   background: #d6a500;
 }
 
-/* FOOTER */
 footer {
   text-align: center;
   color: var(--muted);
@@ -114,7 +111,6 @@ footer {
   margin-top: 40px;
 }
 
-/* FADE ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;

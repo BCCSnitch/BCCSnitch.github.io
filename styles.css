@@ -9,9 +9,6 @@
   --gap: 24px;
 }
 
-/* -----------------------
-   Global / Layout
-   ----------------------- */
 * { box-sizing: border-box; }
 
 html, body {
@@ -43,7 +40,6 @@ body {
   overscroll-behavior: contain;
 }
 
-/* HEADER */
 header {
   display: flex;
   justify-content: space-between;
@@ -87,7 +83,6 @@ nav a {
   height: 20px;
 }
 
-/* MAIN LAYOUT */
 .layout {
   display: grid;
   grid-template-columns: 2.3fr 0.8fr;
@@ -95,16 +90,12 @@ nav a {
   margin-top: 2rem;
 }
 
-/* main content wrapper */
 .main-content {
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
 
-/* -----------------------
-   HERO - restored original behavior (cover, fixed image area)
-   ----------------------- */
 .hero {
   background: var(--card);
   border-radius: var(--radius);
@@ -116,9 +107,8 @@ nav a {
 
 .hero:hover { transform: translateY(-2px); }
 
-/* original hero-image rule: fixed height area so hero images look consistent */
 .hero-image {
-  width: 100%;          /* restored from original */
+  width: 100%;
   background: #000;
   display: flex;
   justify-content: center;
@@ -129,7 +119,7 @@ nav a {
 .hero-image img {
   width: 100%;
   height: auto;
-  object-fit: cover;        /* restored: fill hero area (may crop edges) */
+  object-fit: cover;
   display: block;
   background-color: #000;
 }
@@ -144,18 +134,12 @@ nav a {
   line-height: 1.2;
 }
 
-/* hero meta (kept slim; preview removed earlier) */
 .hero .meta {
   color: var(--muted);
   font-size: 0.9rem;
   margin-top: 12px;
 }
 
-/* -----------------------
-   NEWS GRID (masonry via columns)
-   - news-grid becomes flex container of columns
-   - columns (.news-column) hold stacked cards
-   ----------------------- */
 .news-grid {
   display: flex;
   gap: var(--gap);
@@ -163,7 +147,6 @@ nav a {
   width: 100%;
 }
 
-/* column wrapper used by JS */
 .news-column {
   flex: 1 1 0;
   display: flex;
@@ -172,7 +155,6 @@ nav a {
   min-width: 0;
 }
 
-/* card */
 .news-card {
   background: var(--card);
   border-radius: var(--radius);
@@ -188,7 +170,6 @@ nav a {
   box-shadow: 0 8px 22px rgba(0,0,0,0.35);
 }
 
-/* image area: images determine card height naturally */
 .card-image {
   width: 100%;
   background: #000;
@@ -201,12 +182,11 @@ nav a {
 .card-image img {
   width: 100%;
   height: auto;
-  object-fit: contain; /* keep card images intact, don't crop inside card */
+  object-fit: contain;
   display: block;
   background-color: #000;
 }
 
-/* card content (title + meta) */
 .card-content {
   padding: 16px 18px;
 }
@@ -224,33 +204,38 @@ nav a {
   margin-top: 8px;
 }
 
-/* -----------------------
-   SIDEBAR (search + trending + optional extra)
-   ----------------------- */
 .sidebar {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* Search box (left unchanged visually) */
 .search-box {
   margin-bottom: 0.5rem;
 }
 
 .search-box input {
   width: 100%;
-  padding: 0.8rem;
+  padding: 12px 14px;
   border-radius: var(--radius);
   border: none;
-  background: #1a2435;
+  background: var(--card);
   color: var(--text);
+  font-size: 0.95rem;
   outline: none;
+  transition: box-shadow 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.22);
 }
 
-/* -----------------------
-   TRENDING - restored original list-style rules
-   ----------------------- */
+.search-box input:focus {
+  box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(0,0,0,0.22);
+}
+
+.search-box input::placeholder {
+  color: var(--muted);
+}
+
 .trending {
   background: var(--card);
   border-radius: var(--radius);
@@ -275,7 +260,7 @@ nav a {
   padding: 12px 6px;
   border-bottom: 1px solid #334155;
   cursor: pointer;
-  display: flex;               /* restored original: flex layout */
+  display: flex;
   align-items: baseline;
   gap: 12px;
   transition: background-color 0.2s ease;
@@ -304,7 +289,6 @@ nav a {
   font-size: 0.9em;
 }
 
-/* Extra box below trending area (keeps previous neutral style) */
 .sidebar .sidebar-extra {
   margin-top: 6px;
   background: #0f1a26;
@@ -314,23 +298,17 @@ nav a {
   font-size: 0.95rem;
 }
 
-/* -----------------------
-   Loading / No results (made larger & centered)
-   ----------------------- */
 .no-results {
   text-align: center;
   color: var(--muted);
   font-style: italic;
   margin: 32px auto;
   padding: 28px;
-  font-size: 1.25rem;       /* larger, more visible */
+  font-size: 1.25rem;
   max-width: 800px;
   border-radius: 10px;
 }
 
-/* -----------------------
-   Account sidebar & overlay (unchanged)
-   ----------------------- */
 .overlay {
     position: fixed;
     top: 0;
@@ -353,7 +331,7 @@ nav a {
 .account-sidebar {
     position: fixed;
     top: 0;
-    right: -400px; /* Hidden off-screen initially */
+    right: -400px;
     width: 340px;
     height: 100%;
     background: #101826;
@@ -440,8 +418,6 @@ nav a {
     background: #d6a500;
 }
 
-
-/* footer */
 footer {
   text-align: center;
   color: var(--muted);

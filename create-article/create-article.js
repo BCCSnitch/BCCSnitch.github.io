@@ -1,18 +1,12 @@
-/* create-article.js
-   Readable & commented.
-   Key focus: font/font-size reliability (no flicker during typing), menus stay open,
-   marker-based insert for images/tables, autosave 5s.
-*/
-
-/* -------------------- Configuration -------------------- */
+// Supabase config
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = "https://roqlhnyveyzjriawughf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const IMAGE_BUCKET = "Images";
-const AUTOSAVE_MS = 5000; // 5 seconds
+const AUTOSAVE_MS = 5000;
 
-/* -------------------- DOM references -------------------- */
+// DOM elements
 const editor = document.getElementById("editor");
 const titleInput = document.getElementById("titleInput");
 const statusEl = document.getElementById("status");
@@ -35,8 +29,7 @@ const tableGrid = document.getElementById("tableGrid");
 const gridHint = document.getElementById("gridHint");
 const editors = document.getElementById("editors");
 
-/* -------------------- Local state -------------------- */
-let savedRange = null;              // last saved Range (clone)
+let savedRange = null;
 let quickSaveTimer = null;
 let saveLock = false;
 let currentUser = null;
@@ -142,14 +135,11 @@ const history = {
   }
 };
 
-/* -------------------- Small helpers -------------------- */
 function setStatus(t) { if (statusEl) statusEl.textContent = t || ""; }
 function setLastSaved(ts) { if (lastSavedEl) lastSavedEl.textContent = ts ? `Last saved: ${new Date(ts).toLocaleTimeString()}` : "—"; }
 function escapeHtml(s) { return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 function nowId(prefix='x'){ return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
 
-/* -------------------- Selection save / restore -------------------- */
-/* Save a clone of the current selection range (or null) */
 function saveSelection(){
   try {
     const s = window.getSelection();
@@ -160,7 +150,6 @@ function saveSelection(){
   }
 }
 
-/* Restore the previously saved range if still valid; otherwise, place caret at end */
 function restoreSelection(){
   try {
     const s = window.getSelection();
@@ -182,7 +171,6 @@ function restoreSelection(){
   }
 }
 
-/* Place caret helpers used after inserting content */
 function placeCaretAt(node, offset = 0){
   try {
     const r = document.createRange();
@@ -208,7 +196,6 @@ function placeCaretAfterNode(node){
   } catch (e) {}
 }
 
-/* Extract HTML for the current selection */
 function getSelectionHtml(){
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return '';
@@ -218,12 +205,6 @@ function getSelectionHtml(){
   return container.innerHTML;
 }
 
-/* -------------------- Typing-span (when selection is collapsed) --------------------
-   When the selection is collapsed and the user chooses a style (font/f-size),
-   we insert a zero-width span with that style and place the caret inside it.
-   This guarantees the next typed character inherits the style immediately
-   (no flicker of the old font while typing).
-*/
 function insertTypingSpanHtml(styleObj){
   const id = nowId('ts');
   const style = Object.entries(styleObj || {}).map(([k,v]) => `${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}:${v};`).join('');
@@ -250,7 +231,6 @@ function insertTypingSpanHtml(styleObj){
   return null;
 }
 
-/* Apply style to current selection or insert typing span if selection collapsed */
 function applyStyle(styleObj){
   try {
     const sel = window.getSelection();
@@ -318,9 +298,6 @@ function applyStyle(styleObj){
 }
 
 
-/* -------------------- Toolbar wiring -------------------- */
-
-/* Save selection when interacting with toolbar controls (so we can restore later) */
 if (toolbar) {
   toolbar.addEventListener('pointerdown', (e) => {
     // if user interacts with selects or menus, preserve selection
@@ -356,7 +333,6 @@ if (toolbar) {
   });
 }
 
-/* Update visual active state for simple toggle buttons (bold/italic/etc) */
 function updateToolbarState(){
   if (!toolbar) return;
   toolbar.querySelectorAll('.tb').forEach(el => {
@@ -371,15 +347,6 @@ function updateToolbarState(){
   });
 }
 
-/* -------------------- Font family & Font size behavior --------------------
-   Goal: font and font-size should:
-     - Save the selection when the menu/button is engaged
-     - Restore selection and apply the chosen style
-     - If selection was collapsed, create typing-span so next character uses style immediately
-     - Avoid toolbar-sync that runs during typing (we only sync on pointer/nav)
-*/
-
-/* FONT family */
 if (fontSelect) {
   fontSelect.addEventListener('pointerdown', () => saveSelection());
   fontSelect.addEventListener('change', (e) => {
@@ -418,10 +385,6 @@ if (fontSelect) {
   });
 }
 
-/* FONT SIZE */
-/* Keep the font-size dropdown open while interacting. Use pointerdown to save the selection
-   so the subsequent click on a size will use that saved range.
-*/
 if (fontSizeBtn && fontSizeMenu) {
   fontSizeBtn.addEventListener('click', (e) => { e.stopPropagation(); saveSelection(); fontSizeMenu.classList.toggle('open'); });
 
@@ -473,7 +436,6 @@ if (fontSizeBtn && fontSizeMenu) {
   });
 }
 
-/* -------------------- Sup/Sub and Undo/Redo -------------------- */
 function executeScriptCommand(isSuper) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
@@ -608,7 +570,6 @@ if (redoBtn) {
   });
 }
 
-/* -------------------- Supabase helper to upload files -------------------- */
 async function uploadFileToBucket(bucket, file, destPrefix = ""){
   if (!supabase) throw new Error('Supabase client unavailable');
   const safe = (file.name || 'file').replace(/\s+/g,'_');
@@ -619,10 +580,6 @@ async function uploadFileToBucket(bucket, file, destPrefix = ""){
   return urlData?.publicUrl || urlData?.public_url || null;
 }
 
-/* -------------------- Marker helpers (insert at saved caret) --------------------
-   When the user clicks Insert image/table, we immediately create a tiny marker element
-   at the savedRange. After upload / table build completes, we replace that marker with HTML.
-*/
 function createMarkerAtSavedRange(){
   try {
     const id = nowId('m');
@@ -658,10 +615,6 @@ function replaceMarkerWithHtml(id, html){
   return next;
 }
 
-/* -------------------- Image insertion (marker-based) --------------------
-   - When the label/button for the file input is pressed we save the selection and insert a marker.
-   - After upload completes we replace marker with <img>.
-*/
 let pendingImageMarkerId = null;
 if (imageInput) {
   // try to find the visual label to capture pointerdown
@@ -709,7 +662,6 @@ if (imageInput) {
   });
 }
 
-/* -------------------- Paste & drop image handlers (insert at current caret) -------------------- */
 if (editor) {
   editor.addEventListener('paste', async (ev) => {
     const items = ev.clipboardData?.items;
@@ -756,7 +708,6 @@ if (editor) {
   });
 }
 
-/* -------------------- Table hover-grid insertion (marker-based) -------------------- */
 let pendingTableMarkerId = null;
 (function buildTableGrid(){
   if (!tableGrid) return;
@@ -842,7 +793,6 @@ let pendingTableMarkerId = null;
   document.addEventListener('click', () => { if (tableMenu) tableMenu.classList.remove('open'); });
 })();
 
-/* -------------------- Link insertion -------------------- */
 function openLinkPrompt(){
   saveSelection();
   const url = prompt('Enter URL (include https://):', '');
@@ -873,7 +823,6 @@ function openLinkPrompt(){
 }
 if (linkBtn) linkBtn.addEventListener('click', (e) => { e.preventDefault(); openLinkPrompt(); });
 
-/* Long-lived link popup (unchanged behavior) */
 (function buildLinkPopup(){
   if (!editor) return;
   const existing = document.getElementById('editor-link-popup'); if (existing) existing.remove();
@@ -904,7 +853,6 @@ if (linkBtn) linkBtn.addEventListener('click', (e) => { e.preventDefault(); open
   popup.addEventListener('click', ()=>{ if (currentAnchor && currentAnchor.href) window.open(currentAnchor.href, '_blank', 'noopener'); popup.style.display = 'none'; currentAnchor = null; });
 })();
 
-/* -------------------- Auto-linkify -------------------- */
 function autoLinkifyInEditor(){
   if (!editor) return;
   const urlRegex = /(?:(https?:\/\/)[^\s<]+)/g;
@@ -923,7 +871,6 @@ function autoLinkifyInEditor(){
   });
 }
 
-/* -------------------- DOCX import (docx-preview) -------------------- */
 async function hashBlob(blob) {
   const arrayBuffer = await blob.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
@@ -1133,14 +1080,6 @@ async function publishArticle() {
 if (backBtn) backBtn.addEventListener('click', async ()=>{ await saveDraft(); window.location.href = '/drafts-view/'; });
 if (publishBtn) publishBtn.addEventListener('click', (e)=>{ e.preventDefault(); publishArticle(); });
 
-/* -------------------- Toolbar sync (limited to pointer + navigation) --------------------
-   Problem seen previously: syncing toolbar on every tiny selection change (e.g. while typing)
-   causes race/flicker. To avoid that, we only run updateToolbarFromCaret when:
-     - the user clicked / released pointer inside editor (pointerup)
-     - the user used navigation keys (arrow/home/end/page up/down)
-     - the editor receives focus
-   We ignore selectionchange events that aren't preceded by a pointer or nav event.
-*/
 function getElementAtCaret(){
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return editor;
@@ -1152,7 +1091,6 @@ function getElementAtCaret(){
   return node;
 }
 
-/* map px size to nearest pt button */
 function findClosestSizeItem(pxSize){
   if (!pxSize) return null;
   const px = parseFloat(pxSize);
@@ -1168,7 +1106,6 @@ function findClosestSizeItem(pxSize){
   return best;
 }
 
-/* update toolbar state from the current caret location */
 function updateToolbarFromCaret(){
   try {
     // Get current element for sup/sub checks
@@ -1344,7 +1281,6 @@ editor.addEventListener('focus', () => {
   saveSelection();
 });
 
-/* keyboard navigation keys => update toolbar */
 editor.addEventListener('keydown', (ev) => {
   const navKeys = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'];
   if (navKeys.includes(ev.key)) {
@@ -1359,7 +1295,6 @@ editor.addEventListener('keydown', (ev) => {
 });
 
 
-/* -------------------- Initialization -------------------- */
 (async function init(){
   setStatus('Loading…');
   const ok = await checkAuthAndRole();
@@ -1460,7 +1395,6 @@ async function checkAuthAndRole() {
   return true;
 }
 
-/* --- Always sync toolbar state with current cursor/selection --- */
 document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
   if (!sel || !editor.contains(sel.anchorNode)) return;
