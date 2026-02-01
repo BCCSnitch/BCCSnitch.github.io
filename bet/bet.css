@@ -359,3 +359,18 @@
   box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
 }
 
+/* Mobile responsive styles */
+@media (max-width: 800px) {
+  /* Show dropdown on mobile */
+  .dropdown-btn {
+    display: flex !important;
+  }
+  
+  /* Hide nav buttons on mobile */
+  #nav > #homeBtn,
+  #nav > #createBetBtn,
+  #nav > #account {
+    display: none !important;
+  }
+}
+

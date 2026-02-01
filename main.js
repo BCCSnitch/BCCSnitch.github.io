@@ -19,6 +19,11 @@ const newsGrid = document.querySelector('.news-grid')
 const heroSection = document.querySelector('.hero')
 const trendingList = document.querySelector('.trending ul')
 const searchInput = document.querySelector('.search-box input')
+const dropdownBtn = document.getElementById('dropdown-btn')
+const dropdownMenu = document.getElementById('dropdown-menu')
+const dropdownAdmin = document.getElementById('dropdown-admin')
+const dropdownMarket = document.getElementById('dropdown-market')
+const dropdownAccount = document.getElementById('dropdown-account')
 
 let overlay = document.querySelector('.overlay')
 if (!overlay) {
@@ -49,6 +54,8 @@ function setupSidebarEvents() {
   overlay.addEventListener('click', () => {
     sidebar.classList.remove('open')
     overlay.classList.remove('active')
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
   })
 
   logoutBtn?.addEventListener('click', async () => {
@@ -58,6 +65,34 @@ function setupSidebarEvents() {
       overlay.classList.remove('active')
       location.reload()
     }
+  })
+
+  // Dropdown menu toggle
+  dropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    dropdownBtn.classList.toggle('active')
+    dropdownMenu?.classList.toggle('open')
+  })
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownMenu?.contains(e.target) && !dropdownBtn?.contains(e.target)) {
+      dropdownMenu?.classList.remove('open')
+      dropdownBtn?.classList.remove('active')
+    }
+  })
+
+  // Dropdown admin button
+  dropdownAdmin?.addEventListener('click', () => {
+    window.location.href = '/admin-dashboard/'
+  })
+
+  // Dropdown account button - opens sidebar
+  dropdownAccount?.addEventListener('click', () => {
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+    sidebar.classList.add('open')
+    overlay.classList.add('active')
   })
 }
 
@@ -73,6 +108,11 @@ async function checkAuthAndRole() {
       marketBtn.style.display = 'none'
       adminDashboardBtn.style.display = 'none'
       createNewBtn.style.display = 'none'
+      // Hide dropdown when not logged in (remove logged-in class)
+      if (dropdownBtn) dropdownBtn.classList.remove('logged-in')
+      if (dropdownAdmin) dropdownAdmin.style.display = 'none'
+      if (dropdownMarket) dropdownMarket.style.display = 'none'
+      if (dropdownAccount) dropdownAccount.style.display = 'none'
       return
     }
 
@@ -81,6 +121,11 @@ async function checkAuthAndRole() {
     marketBtn.style.display = ''
     userEmail.textContent = user.email
     avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
+    
+    // Show dropdown when logged in (add logged-in class, CSS controls actual display based on size)
+    if (dropdownBtn) dropdownBtn.classList.add('logged-in')
+    if (dropdownMarket) dropdownMarket.style.display = ''
+    if (dropdownAccount) dropdownAccount.style.display = ''
 
     const { data: profile } = await supabase
       .from('user_roles')
@@ -88,17 +133,23 @@ async function checkAuthAndRole() {
       .eq('user_id', user.id)
       .single()
 
-    if(window.innerWidth >= 900) {
-      if (profile?.role === 'Admin') {
-        adminDashboardBtn.style.display = ''
-        createNewBtn.style.display = ''
-      } else if (profile?.role === 'Writer') {
-        createNewBtn.style.display = ''
-        adminDashboardBtn.style.display = 'none'
-      } else {
-        adminDashboardBtn.style.display = 'none'
-        createNewBtn.style.display = 'none'
-      }
+    // Update dropdown admin visibility
+    if (profile?.role === 'Admin') {
+      if (dropdownAdmin) dropdownAdmin.style.display = ''
+    } else {
+      if (dropdownAdmin) dropdownAdmin.style.display = 'none'
+    }
+
+    // Show admin/writer buttons based on role (CSS handles responsive hiding)
+    if (profile?.role === 'Admin') {
+      adminDashboardBtn.style.display = ''
+      createNewBtn.style.display = ''
+    } else if (profile?.role === 'Writer') {
+      createNewBtn.style.display = ''
+      adminDashboardBtn.style.display = 'none'
+    } else {
+      adminDashboardBtn.style.display = 'none'
+      createNewBtn.style.display = 'none'
     }
   } catch (err) {
     console.error('Error checking session/role:', err)

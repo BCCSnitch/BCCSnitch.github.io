@@ -17,14 +17,22 @@
         <header>
           <div class="brand"><h1>The Snitch</h1></div>
           <nav id="nav">
-            <button onclick="window.location.href='/bet/'">Market</button>
+            <button id="marketBtn" onclick="window.location.href='/bet/'">Market</button>
             <button id="account">Account</button>
+            <button id="dropdown-btn" class="dropdown-btn" aria-label="Menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
             <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
-              <img src = /instagramIcon.png alt = "Instagram Link">
+              <img src="/instagramIcon.png" alt="Instagram Link">
             </a>
+            <div id="dropdown-menu" class="dropdown-menu">
+              <button onclick="window.location.href='/bet/'">Market</button>
+              <button id="dropdown-account">Account</button>
+            </div>
           </nav>
         </header>
-
         <main class="layout single-column">
           <section class="main-content">
             <div class="create-hero">
@@ -32,7 +40,6 @@
               <h2>Create A Market</h2>
               <p class="subtitle">Set up a new prediction market for the community to bet on.</p>
             </div>
-
             <div id="formWrap" class="form-card">
               <h3>New Market Details</h3>
               <form id="createForm" class="create-form">
@@ -73,10 +80,8 @@
               </form>
               <div id="status"></div>
             </div>
-
           </section>
         </main>
-
         <div id="overlay" class="overlay"></div>
         <aside class="account-sidebar" id="accountSidebar">
           <button class="close-btn" id="closeSidebar">×</button>
@@ -87,11 +92,9 @@
           </div>
           <button class="logout-btn" id="logout">Sign Out</button>
         </aside>
-
         <footer><p>© 2025 The Snitch · America's Finest News Source</p></footer>
       </div>
     </div>
-
     <script type="module" src="/bet/create-bet/create-bet.js"></script>
   </body>
 </html>

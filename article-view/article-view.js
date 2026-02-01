@@ -109,7 +109,9 @@ async function checkAdminAndRenderDelete(articleId) {
         '⚠️ Are you sure you want to DELETE this article? This action cannot be undone.'
       )
       if (!confirmed) return
-      deleteArticleImages(articleEl.innerHTML, "Images", titleImage.src);
+      
+      // Delete images first, then delete the article record
+      await deleteArticleImages(articleEl.innerHTML, "Images", titleImage.src);
 
       const { error } = await supabase.from('articles').delete().eq('id', articleId)
       if (error) {
@@ -128,34 +130,54 @@ async function checkAdminAndRenderDelete(articleId) {
 }
 
 async function deleteArticleImages(html, bucket = 'Images', title_image = null) {
-  if (!html) return
+  const pathsToDelete = []
 
-  // Create a temporary div to parse HTML
-  const temp = document.createElement('div')
-  temp.innerHTML = html
+  // Extract paths from HTML content
+  if (html) {
+    const temp = document.createElement('div')
+    temp.innerHTML = html
 
-  // Get all <img> elements
-  const imgElements = Array.from(temp.querySelectorAll('img'))
+    const imgElements = Array.from(temp.querySelectorAll('img'))
 
-  if (imgElements.length === 0) return
-
-  // Extract bucket paths from src URLs
-  const pathsToDelete = imgElements
-    .map(img => {
+    imgElements.forEach(img => {
       try {
-        const url = new URL(img.src)
-        // Assuming the path after /bucket-name/ is the file path
-        const match = url.pathname.match(new RegExp(`/${bucket}/(.+)$`))
-        return match ? decodeURIComponent(match[1]) : null
+        const src = img.src || img.getAttribute('src')
+        if (!src) return
+        
+        // Try to extract path from Supabase storage URL
+        // Matches patterns like: /storage/v1/object/public/Images/filename.jpg
+        // or just /Images/filename.jpg
+        const match = src.match(/\/(?:storage\/v1\/object\/public\/)?Images\/(.+?)(?:\?.*)?$/)
+        if (match) {
+          pathsToDelete.push(decodeURIComponent(match[1]))
+        }
       } catch {
-        return null
+        // Skip invalid URLs
       }
     })
-    .filter(Boolean) // Remove nulls
+  }
 
-  if (pathsToDelete.length === 0) return
-  if(title_image) pathsToDelete.push((title_image.match(/Images\/(.+)$/) || [])[1]);
-  console.log(pathsToDelete);
+  // Handle title image separately
+  if (title_image) {
+    try {
+      const match = title_image.match(/\/(?:storage\/v1\/object\/public\/)?Images\/(.+?)(?:\?.*)?$/)
+      if (match) {
+        const path = decodeURIComponent(match[1])
+        if (!pathsToDelete.includes(path)) {
+          pathsToDelete.push(path)
+        }
+      }
+    } catch {
+      // Skip invalid title image URL
+    }
+  }
+
+  if (pathsToDelete.length === 0) {
+    console.log('No images to delete')
+    return
+  }
+
+  console.log('Deleting images:', pathsToDelete)
 
   // Delete files from Supabase Storage
   const { data, error } = await supabase.storage.from(bucket).remove(pathsToDelete)
@@ -163,7 +185,7 @@ async function deleteArticleImages(html, bucket = 'Images', title_image = null) 
   if (error) {
     console.error('Error deleting images from storage:', error)
   } else {
-    console.log('Deleted images:', pathsToDelete)
+    console.log('Successfully deleted images:', pathsToDelete)
   }
 }
 

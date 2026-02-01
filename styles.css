@@ -78,6 +78,81 @@ nav img {
   height: 20px;
 }
 
+/* Dropdown menu button - hidden by default, shown at small screens */
+.dropdown-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 20px;
+}
+
+.dropdown-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.dropdown-btn.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.dropdown-btn.active span:nth-child(2) {
+  opacity: 0;
+  transition: opacity 0s;
+}
+
+.dropdown-btn.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Dropdown menu - hidden by default */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 8px 0;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  border: 1px solid #334155;
+}
+
+.dropdown-menu button {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.dropdown-menu button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+}
+
+.dropdown-menu.open {
+  display: block;
+}
+
+#nav {
+  position: relative;
+}
+
 nav a {
   width: 20px;
   height: 20px;
@@ -310,112 +385,112 @@ nav a {
 }
 
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 1500;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1500;
 }
 
 .overlay.active {
-    opacity: 1;
-    visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 .account-sidebar {
-    position: fixed;
-    top: 0;
-    right: -400px;
-    width: 340px;
-    height: 100%;
-    background: #101826;
-    color: #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    padding: 2rem;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
-    z-index: 2001;
-    transition: right 0.35s ease;
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 340px;
+  height: 100%;
+  background: #101826;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 2001;
+  transition: right 0.35s ease;
 }
 
 .account-sidebar.open {
-    right: 0; 
+  right: 0; 
 }
 
 .close-btn {
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-    background: none;
-    border: none;
-    color: #ccc;
-    font-size: 1.5rem;
-    cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
 .account-header {
-    text-align: center;
-    margin-bottom: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .account-header h2 {
-    color: #f9c300;
-    font-size: 1.5rem;
+  color: #f9c300;
+  font-size: 1.5rem;
 }
 
 .avatar {
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-    margin-bottom: 1rem;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
 }
 
 .account-section {
-    margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .account-section h3 {
-    color: #f9c300;
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+  color: #f9c300;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .account-section button {
-    display: block;
-    width: 100%;
-    background: #1a2435;
-    color: #e0e0e0;
-    border: none;
-    padding: 0.6rem;
-    margin: 0.3rem 0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
+  display: block;
+  width: 100%;
+  background: #1a2435;
+  color: #e0e0e0;
+  border: none;
+  padding: 0.6rem;
+  margin: 0.3rem 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .account-section button:hover {
-    background: #273347;
+  background: #273347;
 }
 
 .logout-btn {
-    background: #f9c300;
-    border: none;
-    color: #000;
-    padding: 0.8rem;
-    font-weight: bold;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.2s ease;
+  background: #f9c300;
+  border: none;
+  color: #000;
+  padding: 0.8rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .logout-btn:hover {
-    background: #d6a500;
+  background: #d6a500;
 }
 
 footer {
@@ -429,8 +504,16 @@ footer {
 
 @media (max-width: 1150px) {
   .container { width: 100vw; }
+  #innerContainer { max-width: 100%; }
   .layout { grid-template-columns: 1fr; }
+  .sidebar { order: -1; }
   .trending { display: none; }
+  .search-box { margin-bottom: 0px; }
+  
+  /* Hide Create New Article on medium screens */
+  #writer, .hide-on-medium {
+    display: none !important;
+  }
 }
 
 @media (max-width: 800px) {
@@ -440,4 +523,35 @@ footer {
   .hero h2 { font-size: 1.15rem; }
   .hero .meta { margin-top: 8px }
   .hero { margin-bottom: 18px }
+  
+  /* Show dropdown button on mobile when logged in (main page) */
+  .dropdown-btn.logged-in {
+    display: flex !important;
+  }
+  
+  /* Hide nav buttons on mobile - dropdown handles navigation (except login) */
+  #nav > #admin,
+  #nav > #market,
+  #nav > #writer,
+  #nav > #account {
+    display: none !important;
+  }
+  
+  /* Adjust header for mobile */
+  header {
+    padding: 10px 8px;
+  }
+  
+  .brand h1 {
+    font-size: 1.4rem;
+  }
+  
+  nav button {
+    margin-left: 12px;
+    font-size: 0.9rem;
+  }
+  
+  #innerContainer {
+    padding: 12px;
+  }
 }

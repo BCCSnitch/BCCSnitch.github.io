@@ -288,3 +288,91 @@
   max-width: 800px;
   margin: 2rem auto 0;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 800px) {
+  /* Show dropdown on mobile */
+  .dropdown-btn {
+    display: flex !important;
+  }
+  
+  /* Hide nav buttons on mobile */
+  #nav > #marketBtn,
+  #nav > #account {
+    display: none !important;
+  }
+  
+  .layout.single-column {
+    margin: 1rem auto 0;
+    padding: 0 12px;
+  }
+  
+  .create-hero {
+    padding: 24px 16px;
+    border-radius: 14px;
+  }
+  
+  .create-hero h2 {
+    font-size: 1.6rem;
+  }
+  
+  .create-hero .icon {
+    font-size: 2rem;
+  }
+  
+  .form-card {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+  
+  .form-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .create-form input,
+  .create-form textarea {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+  }
+  
+  .deadline-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .deadline-row input[type="date"] {
+    min-width: 100%;
+    padding: 14px 16px;
+  }
+  
+  .time-picker {
+    justify-content: center;
+  }
+  
+  .time-picker input[type="number"] {
+    width: 50px;
+    padding: 14px 8px;
+  }
+  
+  .time-picker select {
+    padding: 14px 10px;
+  }
+  
+  .option-row {
+    flex-wrap: wrap;
+  }
+  
+  .option-row .outcome-input {
+    min-width: 0;
+  }
+  
+  .btn-primary {
+    padding: 14px 24px;
+    width: 100%;
+  }
+  
+  .btn-secondary {
+    padding: 12px 20px;
+    width: 100%;
+  }
+}

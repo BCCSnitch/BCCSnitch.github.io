@@ -17,6 +17,10 @@ const overlay = document.getElementById('overlay')
 const logoutBtn = document.getElementById('logout')
 const userEmail = document.getElementById('userEmail')
 const avatar = document.getElementById('avatar')
+const dropdownBtn = document.getElementById('dropdown-btn')
+const dropdownMenu = document.getElementById('dropdown-menu')
+const dropdownAccount = document.getElementById('dropdown-account')
+const homeBtn = document.getElementById('homeBtn')
 
 function setupSidebarEvents() {
   accountBtn?.addEventListener('click', () => {
@@ -32,6 +36,31 @@ function setupSidebarEvents() {
   overlay?.addEventListener('click', () => {
     sidebar.classList.remove('open')
     overlay.classList.remove('active')
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+  })
+
+  // Dropdown menu toggle
+  dropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    dropdownBtn.classList.toggle('active')
+    dropdownMenu?.classList.toggle('open')
+  })
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownMenu?.contains(e.target) && !dropdownBtn?.contains(e.target)) {
+      dropdownMenu?.classList.remove('open')
+      dropdownBtn?.classList.remove('active')
+    }
+  })
+
+  // Dropdown account button - opens sidebar
+  dropdownAccount?.addEventListener('click', () => {
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+    sidebar.classList.add('open')
+    overlay.classList.add('active')
   })
 
   logoutBtn?.addEventListener('click', async () => {
@@ -146,5 +175,11 @@ async function removeAdmin(id) {
 }
 
 addUserBtn.addEventListener("click", addUser);
+emailInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addUser();
+  }
+});
 setupSidebarEvents();
 checkAdminAccess();
