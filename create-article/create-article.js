@@ -1,5 +1,5 @@
 // Supabase config
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 const SUPABASE_URL = "https://roqlhnyveyzjriawughf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -138,6 +138,23 @@ const history = {
 function setStatus(t) { if (statusEl) statusEl.textContent = t || ""; }
 function setLastSaved(ts) { if (lastSavedEl) lastSavedEl.textContent = ts ? `Last saved: ${new Date(ts).toLocaleTimeString()}` : "—"; }
 function escapeHtml(s) { return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+// Calculate image aspect ratio (height / width) from a URL
+function getImageAspectRatio(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        resolve(img.naturalHeight / img.naturalWidth);
+      } else {
+        resolve(null);
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = src;
+  });
+}
 function nowId(prefix='x'){ return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
 
 function saveSelection(){
@@ -1048,12 +1065,23 @@ async function publishArticle() {
     const body = editor.innerHTML || '<p></p>';
     const savedHtml = `<h1>${escapeHtml(title)}</h1>${body}`;
 
+    // Calculate aspect ratio from title image
+    let imageAspectRatio = null;
+    if (window.titleImage) {
+      try {
+        imageAspectRatio = await getImageAspectRatio(window.titleImage);
+      } catch (err) {
+        console.warn('Could not calculate image aspect ratio:', err);
+      }
+    }
+
     const { error } = await supabase.from('articles').insert([
       {
         created_at: new Date().toISOString(),
         visits: 0,
         html: savedHtml,
         title_image: window.titleImage,
+        image_aspect_ratio: imageAspectRatio,
         editors: editors.value,
       },
     ]);

@@ -1,5 +1,5 @@
 // Supabase config
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -167,8 +167,9 @@ async function loadMarkets() {
       const isOpen = status === 'open' && !isExpired
       
       const myBets = userBetsByMarket[bet.id] || []
-      const myBetsHtml = myBets.length > 0 
-        ? `<div class="my-bets">Your bets: ${myBets.map(b => `<span class="my-bet-tag">${escapeHtml(b.outcome)} ($${b.amount})</span>`).join(' ')}</div>`
+      const userExistingBet = myBets.length > 0 ? myBets[0] : null // User can only have one bet per market
+      const myBetsHtml = userExistingBet 
+        ? `<div class="my-bets">Your bet: <span class="my-bet-tag">${escapeHtml(userExistingBet.outcome)} ($${userExistingBet.amount})</span></div>`
         : ''
 
       const wrapper = document.createElement('div')
@@ -177,9 +178,12 @@ async function loadMarkets() {
       const marketStats = betStats[bet.id] || {}
       const totalBets = Object.values(marketStats).reduce((sum, c) => sum + c, 0)
       
+      // If user already has a bet, only show their chosen outcome as clickable
       const outcomesHtml = outcomes.map(o => {
         const isWinner = status === 'resolved' && bet.winning_outcome === o
-        const pillClass = isWinner ? 'outcome-pill winner' : 'outcome-pill' + (isOpen ? ' clickable' : '')
+        const isUserChoice = userExistingBet && userExistingBet.outcome === o
+        const canClick = isOpen && (!userExistingBet || isUserChoice)
+        const pillClass = isWinner ? 'outcome-pill winner' : 'outcome-pill' + (canClick ? ' clickable' : '') + (isUserChoice ? ' user-choice' : '')
         const count = marketStats[o] || 0
         const pct = totalBets > 0 ? Math.round((count / totalBets) * 100) : 0
         return `<div class="${pillClass}" data-bet-id="${bet.id}" data-outcome="${escapeHtml(o)}">${escapeHtml(o)}${isWinner ? ' ✅' : ''}<span class="pill-stats">${pct}%</span></div>`
@@ -195,9 +199,9 @@ async function loadMarkets() {
         ${myBetsHtml}
         <div class="market-outcomes">${outcomesHtml}</div>
         ${isOpen ? `
-          <div class="bet-input-row" style="display:none;" data-bet-id="${bet.id}">
+          <div class="bet-input-row" style="display:none;" data-bet-id="${bet.id}" data-has-existing="${userExistingBet ? 'true' : 'false'}">
             <input type="number" class="bet-amount-input" placeholder="Amount" min="1" />
-            <button class="place-bet-btn">Place Bet</button>
+            <button class="place-bet-btn">${userExistingBet ? 'Increase Bet' : 'Place Bet'}</button>
             <button class="cancel-bet-btn">Cancel</button>
           </div>
         ` : ''}
@@ -242,8 +246,9 @@ async function loadMarkets() {
           return
         }
 
+        const hasExisting = inputRow.dataset.hasExisting === 'true'
         btn.disabled = true
-        btn.textContent = 'Placing...'
+        btn.textContent = hasExisting ? 'Increasing...' : 'Placing...'
 
         const { data, error } = await supabase.rpc('place_bet', {
           p_bet_id: betId,
@@ -253,7 +258,8 @@ async function loadMarkets() {
 
         if (error || !data?.success) {
           btn.disabled = false
-          btn.textContent = 'Place Bet'
+          btn.textContent = hasExisting ? 'Increase Bet' : 'Place Bet'
+          alert(data?.error || 'Failed to place bet')
           return
         }
         
@@ -279,6 +285,14 @@ async function loadMarkets() {
           const { error } = await supabase.from('bets').delete().eq('id', betId)
           if (!error) {
             loadMarkets()
+            const { data: balRow } = await supabase
+              .from('user_balances')
+              .select('amount')
+              .eq('user_id', currentUser.id)
+              .single()
+            if (balRow) {
+              balanceEl.textContent = `$${Number(balRow.amount).toLocaleString()}`
+            }
           }
         })
       })

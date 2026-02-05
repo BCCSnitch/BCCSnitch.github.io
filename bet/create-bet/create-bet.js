@@ -1,5 +1,5 @@
 // Supabase config
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -21,10 +21,61 @@ const dropdownBtn = document.getElementById('dropdown-btn')
 const dropdownMenu = document.getElementById('dropdown-menu')
 const dropdownAccount = document.getElementById('dropdown-account')
 const marketBtn = document.getElementById('marketBtn')
+const deadlineMonth = document.getElementById('deadlineMonth')
+const deadlineDay = document.getElementById('deadlineDay')
 
 let currentUser = null
 let optionCount = 2
 const DRAFT_KEY = 'snitch_bet_draft'
+
+// Initialize date picker dropdowns
+function initDatePicker() {
+  const currentYear = new Date().getFullYear()
+  
+  // Update days based on selected month
+  function updateDays() {
+    const month = parseInt(deadlineMonth.value, 10)
+    const currentDay = parseInt(deadlineDay.value, 10) || 0
+    
+    // Default to 31 days if no month selected
+    let daysInMonth = 31
+    
+    if (month) {
+      // Get number of days in the selected month (accounts for leap year)
+      daysInMonth = new Date(currentYear, month, 0).getDate()
+    }
+    
+    // Clear existing days except placeholder
+    while (deadlineDay.options.length > 1) {
+      deadlineDay.remove(1)
+    }
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const opt = document.createElement('option')
+      opt.value = d
+      opt.textContent = d
+      deadlineDay.appendChild(opt)
+    }
+    
+    // Restore previously selected day, or adjust to max if too high
+    if (currentDay > 0) {
+      if (currentDay <= daysInMonth) {
+        deadlineDay.value = currentDay
+      } else {
+        deadlineDay.value = daysInMonth
+      }
+    }
+  }
+  
+  // Initialize with 31 days on page load
+  updateDays()
+  
+  deadlineMonth?.addEventListener('change', () => {
+    updateDays()
+    saveDraft()
+  })
+  deadlineDay?.addEventListener('change', saveDraft)
+}
 
 function setupSidebarEvents() {
   accountBtn?.addEventListener('click', () => {
@@ -144,12 +195,13 @@ addOptionBtn?.addEventListener('click', () => {
 function saveDraft() {
   const title = document.getElementById('title').value
   const outcomes = Array.from(outcomesContainer.querySelectorAll('.outcome-input')).map(i => i.value)
-  const deadlineDate = document.getElementById('deadlineDate').value
+  const month = deadlineMonth.value
+  const day = deadlineDay.value
   const deadlineHour = document.getElementById('deadlineHour').value
   const deadlineMinute = document.getElementById('deadlineMinute').value
   const deadlineAmPm = document.getElementById('deadlineAmPm').value
   
-  const draft = { title, outcomes, deadlineDate, deadlineHour, deadlineMinute, deadlineAmPm }
+  const draft = { title, outcomes, deadlineMonth: month, deadlineDay: day, deadlineHour, deadlineMinute, deadlineAmPm }
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
 }
 
@@ -162,7 +214,12 @@ function restoreDraft() {
     
     if (draft.title) document.getElementById('title').value = draft.title
     
-    if (draft.deadlineDate) document.getElementById('deadlineDate').value = draft.deadlineDate
+    // Restore date fields - set month first to update day options
+    if (draft.deadlineMonth) {
+      deadlineMonth.value = draft.deadlineMonth
+      deadlineMonth.dispatchEvent(new Event('change'))
+    }
+    if (draft.deadlineDay) deadlineDay.value = draft.deadlineDay
     if (draft.deadlineHour) document.getElementById('deadlineHour').value = draft.deadlineHour
     if (draft.deadlineMinute) document.getElementById('deadlineMinute').value = draft.deadlineMinute
     if (draft.deadlineAmPm) document.getElementById('deadlineAmPm').value = draft.deadlineAmPm
@@ -199,7 +256,6 @@ function clearDraft() {
 }
 
 document.getElementById('title')?.addEventListener('input', saveDraft)
-document.getElementById('deadlineDate')?.addEventListener('change', saveDraft)
 document.getElementById('deadlineHour')?.addEventListener('input', saveDraft)
 document.getElementById('deadlineMinute')?.addEventListener('input', saveDraft)
 document.getElementById('deadlineAmPm')?.addEventListener('change', saveDraft)
@@ -207,13 +263,16 @@ document.querySelectorAll('.outcome-input').forEach(input => {
   input.addEventListener('input', saveDraft)
 })
 
+initDatePicker()
 restoreDraft()
 
 createForm?.addEventListener('submit', async (ev) => {
   ev.preventDefault()
   statusEl.textContent = 'Creating…'
   const title = document.getElementById('title').value.trim()
-  const deadlineDate = document.getElementById('deadlineDate').value
+  const month = deadlineMonth.value
+  const day = deadlineDay.value
+  const year = new Date().getFullYear()
   let deadlineHour = parseInt(document.getElementById('deadlineHour').value, 10)
   const deadlineMinute = document.getElementById('deadlineMinute').value.padStart(2, '0')
   const deadlineAmPm = document.getElementById('deadlineAmPm').value
@@ -226,7 +285,7 @@ createForm?.addEventListener('submit', async (ev) => {
     return
   }
 
-  if (!deadlineDate || isNaN(deadlineHour) || !deadlineMinute) {
+  if (!month || !day || isNaN(deadlineHour) || !deadlineMinute) {
     statusEl.textContent = 'Please set a complete deadline (date and time).'
     return
   }
@@ -237,6 +296,7 @@ createForm?.addEventListener('submit', async (ev) => {
     deadlineHour = 0
   }
   const hour24 = deadlineHour.toString().padStart(2, '0')
+  const deadlineDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
   const deadline = new Date(`${deadlineDate}T${hour24}:${deadlineMinute}:00`)
 

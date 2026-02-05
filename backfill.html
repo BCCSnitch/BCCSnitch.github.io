@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backfill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-hover: #334155;
+      --accent: #eab308;
+      --accent-hover: #facc15;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --info: #3b82f6;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      padding: 12px 20px;
+      border-radius: 50px;
+      margin-bottom: 24px;
+    }
+
+    .user-badge img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .user-badge .info {
+      text-align: left;
+    }
+
+    .user-badge .email {
+      font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .user-badge .role {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--card-hover);
+      color: var(--text);
+      margin-top: 12px;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #475569;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .log-container {
+      margin-top: 24px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .log-header h3 {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .log {
+      background: var(--bg);
+      padding: 16px;
+      border-radius: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .log:empty::before {
+      content: 'Waiting to start...';
+      color: var(--muted);
+    }
+
+    .log .success { color: var(--success); }
+    .log .error { color: var(--error); }
+    .log .info { color: var(--info); }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .progress-bar.active { display: block; }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .loading-screen, .error-screen {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--card-hover);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-screen .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .error-screen h2 {
+      color: var(--error);
+      margin-bottom: 8px;
+    }
+
+    .error-screen p {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h3 {
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .modal .article-title {
+      color: var(--text);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      border: 2px solid var(--card-hover);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .modal input:focus {
+      border-color: var(--accent);
+    }
+
+    .modal input::placeholder {
+      color: var(--muted);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-buttons .btn {
+      flex: 1;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--card-hover);
+      margin: 24px 0;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <!-- Loading State -->
+      <div id="loadingScreen" class="loading-screen">
+        <div class="spinner"></div>
+        <p>Checking authentication...</p>
+      </div>
+
+      <!-- Access Denied -->
+      <div id="errorScreen" class="error-screen hidden">
+        <div class="icon">🚫</div>
+        <h2>Access Denied</h2>
+        <p id="errorMessage">You don't have permission to access this page.</p>
+        <button class="btn" onclick="window.location.href='/'">Return Home</button>
+      </div>
+
+      <!-- Main Content (Admin Only) -->
+      <div id="mainContent" class="hidden">
+        <div class="header">
+          <h1>Article Backfill</h1>
+          <p>Fix missing data for existing articles</p>
+        </div>
+
+        <div style="text-align: center;">
+          <div class="user-badge">
+            <img id="avatar" src="https://placehold.co/32x32" alt="Avatar">
+            <div class="info">
+              <div class="email" id="userEmail">Loading...</div>
+              <div class="role">Admin</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Ratios Section -->
+        <div class="section-title">Image Aspect Ratios</div>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="number" id="pendingCount">-</div>
+            <div class="label">Need Ratios</div>
+          </div>
+          <div class="stat-card">
+            <div class="number" id="completedCount">0</div>
+            <div class="label">Completed</div>
+          </div>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+          <div class="fill" id="progressFill"></div>
+        </div>
+
+        <button id="startBtn" class="btn" disabled>
+          <span id="btnText">Loading...</span>
+        </button>
+
+        <hr class="section-divider">
+
+        <!-- Editor Names Section -->
+        <div class="section-title">Missing Editor Names</div>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="number" id="editorPendingCount">-</div>
+            <div class="label">Need Editors</div>
+          </div>
+          <div class="stat-card">
+            <div class="number" id="editorCompletedCount">0</div>
+            <div class="label">Completed</div>
+          </div>
+        </div>
+
+        <div class="progress-bar" id="editorProgressBar">
+          <div class="fill" id="editorProgressFill"></div>
+        </div>
+
+        <button id="editorBtn" class="btn" disabled>
+          <span id="editorBtnText">Loading...</span>
+        </button>
+
+        <hr class="section-divider">
+
+        <button class="btn btn-secondary" onclick="window.location.href='/'">Back to Home</button>
+
+        <div class="log-container">
+          <div class="log-header">
+            <h3>Activity Log</h3>
+          </div>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for editor input -->
+  <div id="editorModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Enter Editor Name</h3>
+      <div class="article-title" id="modalArticleTitle">Article Title</div>
+      <input type="text" id="editorInput" placeholder="Enter editor name(s)...">
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="skipEditorBtn">Skip</button>
+        <button class="btn" id="saveEditorBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+    
+    const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    // DOM Elements
+    const loadingScreen = document.getElementById('loadingScreen')
+    const errorScreen = document.getElementById('errorScreen')
+    const errorMessage = document.getElementById('errorMessage')
+    const mainContent = document.getElementById('mainContent')
+    const logEl = document.getElementById('log')
+    const startBtn = document.getElementById('startBtn')
+    const btnText = document.getElementById('btnText')
+    const userEmail = document.getElementById('userEmail')
+    const avatar = document.getElementById('avatar')
+    const pendingCount = document.getElementById('pendingCount')
+    const completedCount = document.getElementById('completedCount')
+    const progressBar = document.getElementById('progressBar')
+    const progressFill = document.getElementById('progressFill')
+
+    // Editor elements
+    const editorBtn = document.getElementById('editorBtn')
+    const editorBtnText = document.getElementById('editorBtnText')
+    const editorPendingCount = document.getElementById('editorPendingCount')
+    const editorCompletedCount = document.getElementById('editorCompletedCount')
+    const editorProgressBar = document.getElementById('editorProgressBar')
+    const editorProgressFill = document.getElementById('editorProgressFill')
+    const editorModal = document.getElementById('editorModal')
+    const modalArticleTitle = document.getElementById('modalArticleTitle')
+    const editorInput = document.getElementById('editorInput')
+    const saveEditorBtn = document.getElementById('saveEditorBtn')
+    const skipEditorBtn = document.getElementById('skipEditorBtn')
+
+    let articlesToProcess = []
+    let completed = 0
+    let articlesNeedingEditors = []
+    let editorCompleted = 0
+    let currentEditorResolve = null
+
+    function showError(message) {
+      loadingScreen.classList.add('hidden')
+      mainContent.classList.add('hidden')
+      errorScreen.classList.remove('hidden')
+      errorMessage.textContent = message
+    }
+
+    function showMain() {
+      loadingScreen.classList.add('hidden')
+      errorScreen.classList.add('hidden')
+      mainContent.classList.remove('hidden')
+    }
+
+    function log(msg, type = '') {
+      const line = document.createElement('div')
+      line.className = type
+      line.textContent = `${new Date().toLocaleTimeString()} — ${msg}`
+      logEl.appendChild(line)
+      logEl.scrollTop = logEl.scrollHeight
+    }
+
+    function updateProgress() {
+      const total = articlesToProcess.length
+      const pct = total > 0 ? (completed / total) * 100 : 0
+      progressFill.style.width = `${pct}%`
+      completedCount.textContent = completed
+    }
+
+    function updateEditorProgress() {
+      const total = articlesNeedingEditors.length
+      const pct = total > 0 ? (editorCompleted / total) * 100 : 0
+      editorProgressFill.style.width = `${pct}%`
+      editorCompletedCount.textContent = editorCompleted
+    }
+
+    function extractTitle(html) {
+      const temp = document.createElement('div')
+      temp.innerHTML = html || ''
+      const h1 = temp.querySelector('h1')
+      return h1 ? h1.textContent.trim() : 'Untitled'
+    }
+
+    async function checkAuth() {
+      const { data: sessionData } = await supabase.auth.getSession()
+      let user = sessionData?.session?.user
+
+      if (!user) {
+        await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.href }
+        })
+        return
+      }
+
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+
+      if (roleError || roleData?.role !== 'Admin') {
+        await supabase.auth.signOut()
+        showError('Admin access required. You have been signed out.')
+        return
+      }
+
+      userEmail.textContent = user.email
+      avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/32x32'
+      
+      await loadPendingArticles()
+      await loadArticlesNeedingEditors()
+      showMain()
+    }
+
+    async function loadPendingArticles() {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('id, title_image')
+        .not('title_image', 'is', null)
+        .is('image_aspect_ratio', null)
+
+      if (error) {
+        log('Error loading articles: ' + error.message, 'error')
+        return
+      }
+
+      articlesToProcess = data || []
+      pendingCount.textContent = articlesToProcess.length
+
+      if (articlesToProcess.length === 0) {
+        btnText.textContent = '✓ All Done!'
+        startBtn.disabled = true
+        log('All articles already have aspect ratios!', 'success')
+      } else {
+        btnText.textContent = `Process ${articlesToProcess.length} Articles`
+        startBtn.disabled = false
+      }
+    }
+
+    async function loadArticlesNeedingEditors() {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('id, html, editors')
+        .or('editors.is.null,editors.eq.')
+
+      if (error) {
+        log('Error loading articles needing editors: ' + error.message, 'error')
+        return
+      }
+
+      articlesNeedingEditors = data || []
+      editorPendingCount.textContent = articlesNeedingEditors.length
+
+      if (articlesNeedingEditors.length === 0) {
+        editorBtnText.textContent = '✓ All Done!'
+        editorBtn.disabled = true
+        log('All articles already have editors!', 'success')
+      } else {
+        editorBtnText.textContent = `Fix ${articlesNeedingEditors.length} Articles`
+        editorBtn.disabled = false
+      }
+    }
+
+    function getImageAspectRatio(src) {
+      return new Promise((resolve) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          if (img.naturalWidth && img.naturalHeight) {
+            resolve(img.naturalHeight / img.naturalWidth)
+          } else {
+            resolve(null)
+          }
+        }
+        img.onerror = () => resolve(null)
+        img.src = src
+        setTimeout(() => resolve(null), 10000)
+      })
+    }
+
+    function promptForEditor(articleTitle) {
+      return new Promise((resolve) => {
+        currentEditorResolve = resolve
+        modalArticleTitle.textContent = articleTitle
+        editorInput.value = ''
+        editorModal.classList.remove('hidden')
+        editorInput.focus()
+      })
+    }
+
+    saveEditorBtn.addEventListener('click', () => {
+      const value = editorInput.value.trim()
+      editorModal.classList.add('hidden')
+      if (currentEditorResolve) {
+        currentEditorResolve(value || null)
+        currentEditorResolve = null
+      }
+    })
+
+    skipEditorBtn.addEventListener('click', () => {
+      editorModal.classList.add('hidden')
+      if (currentEditorResolve) {
+        currentEditorResolve(null)
+        currentEditorResolve = null
+      }
+    })
+
+    editorInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveEditorBtn.click()
+      } else if (e.key === 'Escape') {
+        skipEditorBtn.click()
+      }
+    })
+
+    async function runBackfill() {
+      startBtn.disabled = true
+      btnText.textContent = 'Processing...'
+      progressBar.classList.add('active')
+      completed = 0
+      updateProgress()
+
+      log(`Starting image ratio backfill for ${articlesToProcess.length} articles...`, 'info')
+
+      for (let i = 0; i < articlesToProcess.length; i++) {
+        const article = articlesToProcess[i]
+        const ratio = await getImageAspectRatio(article.title_image)
+
+        if (ratio) {
+          const { error } = await supabase
+            .from('articles')
+            .update({ image_aspect_ratio: ratio })
+            .eq('id', article.id)
+
+          if (error) {
+            log(`Article ${article.id}: Failed - ${error.message}`, 'error')
+          } else {
+            log(`Article ${article.id}: Saved ratio ${ratio.toFixed(4)}`, 'success')
+          }
+        } else {
+          log(`Article ${article.id}: Could not load image`, 'error')
+        }
+
+        completed++
+        updateProgress()
+      }
+
+      log('Image ratio backfill complete!', 'success')
+      btnText.textContent = '✓ Complete!'
+      pendingCount.textContent = '0'
+    }
+
+    async function runEditorBackfill() {
+      editorBtn.disabled = true
+      editorBtnText.textContent = 'Processing...'
+      editorProgressBar.classList.add('active')
+      editorCompleted = 0
+      updateEditorProgress()
+
+      log(`Starting editor backfill for ${articlesNeedingEditors.length} articles...`, 'info')
+
+      for (let i = 0; i < articlesNeedingEditors.length; i++) {
+        const article = articlesNeedingEditors[i]
+        const title = extractTitle(article.html)
+        
+        const editorName = await promptForEditor(title)
+
+        if (editorName) {
+          const { error } = await supabase
+            .from('articles')
+            .update({ editors: editorName })
+            .eq('id', article.id)
+
+          if (error) {
+            log(`"${title}": Failed - ${error.message}`, 'error')
+          } else {
+            log(`"${title}": Set editor to "${editorName}"`, 'success')
+          }
+        } else {
+          log(`"${title}": Skipped`, 'info')
+        }
+
+        editorCompleted++
+        updateEditorProgress()
+      }
+
+      log('Editor backfill complete!', 'success')
+      editorBtnText.textContent = '✓ Complete!'
+      editorPendingCount.textContent = '0'
+    }
+
+    startBtn.addEventListener('click', runBackfill)
+    editorBtn.addEventListener('click', runEditorBackfill)
+
+    // Initialize
+    checkAuth()
+  </script>
+</body>
+</html>

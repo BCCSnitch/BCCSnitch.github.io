@@ -1,5 +1,5 @@
 // Supabase config
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 const SUPABASE_URL = 'https://roqlhnyveyzjriawughf.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWxobnl2ZXl6anJpYXd1Z2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODUwNTQsImV4cCI6MjA3NTM2MTA1NH0.VPie8b5quLIeSc_uEUheJhMXaupJWgxzo3_ib3egMJk'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -34,7 +34,7 @@ if (!overlay) {
 
 let allArticles = []
 let currentPage = 0
-const PAGE_SIZE = 20
+const PAGE_SIZE = 25
 let isLoading = false
 let hasMore = true
 
@@ -224,7 +224,7 @@ async function loadPublishedArticles() {
 
     const { data: articles, error } = await supabase
       .from('articles')
-      .select('id, html, title_image, created_at, visits, editors')
+      .select('id, html, title_image, image_aspect_ratio, created_at, visits, editors')
       .not('html', 'is', null)
       .order('created_at', { ascending: false })
       .range(0, PAGE_SIZE - 1)
@@ -248,7 +248,7 @@ async function loadPublishedArticles() {
     renderTrending(trending)
 
     const remaining = allArticles.filter(a => a.id !== heroArticle.id)
-    await renderMasonry(remaining)
+    renderMasonry(remaining)
     
     setupInfiniteScroll()
   } catch (err) {
@@ -268,7 +268,7 @@ async function loadMoreArticles() {
 
     const { data: articles, error } = await supabase
       .from('articles')
-      .select('id, html, title_image, created_at, visits, editors')
+      .select('id, html, title_image, image_aspect_ratio, created_at, visits, editors')
       .not('html', 'is', null)
       .order('created_at', { ascending: false })
       .range(start, end)
@@ -290,7 +290,7 @@ async function loadMoreArticles() {
     const newArticles = articles.filter(a => a.id !== heroArticle?.id && !existingIds.has(String(a.id)))
     
     if (newArticles.length > 0) {
-      await appendToMasonry(newArticles)
+      appendToMasonry(newArticles)
     }
   } catch (err) {
     console.error('Error loading more articles:', err)
@@ -308,7 +308,7 @@ function setupInfiniteScroll() {
     const scrollHeight = container.scrollHeight
     const clientHeight = container.clientHeight
     
-    if (scrollTop + clientHeight >= scrollHeight - 500) {
+    if (scrollTop + clientHeight >= scrollHeight - 800) {
       loadMoreArticles()
     }
   })
@@ -347,7 +347,7 @@ function renderTrending(trending) {
     `).join('')
 }
 
-async function renderMasonry(items) {
+function renderMasonry(items) {
   if (!newsGrid) return
 
   newsGrid.innerHTML = ''
@@ -366,15 +366,16 @@ async function renderMasonry(items) {
     cols.push({ el: col, height: 0 })
   }
 
-  const itemsWithRatios = await estimateImageRatios(items)
-
   const CONTENT_OVERHEAD = 84
+  const DEFAULT_RATIO = 0.75 // 4:3 fallback
 
   const totalGapWidth = GAP * (columns - 1)
   const columnWidth = (containerWidth - totalGapWidth) / columns
 
-  for (const { item, ratio } of itemsWithRatios) {
-    const estImgHeight = ratio && ratio > 0 ? Math.round(columnWidth * ratio) : Math.round(columnWidth * 0.66)
+  for (const article of items) {
+    // Use stored ratio, fallback to default
+    const ratio = article.image_aspect_ratio || DEFAULT_RATIO
+    const estImgHeight = Math.round(columnWidth * ratio)
     const estimatedCardHeight = estImgHeight + CONTENT_OVERHEAD
 
     let minIdx = 0
@@ -386,7 +387,6 @@ async function renderMasonry(items) {
       }
     }
 
-    const article = item
     const imgSrc = article.title_image || 'https://placehold.co/600x400?text=No+Image'
     const card = document.createElement('div')
     card.className = 'news-card'
@@ -394,7 +394,7 @@ async function renderMasonry(items) {
     card.setAttribute('onclick', `window.location.href='/article-view/?id=${article.id}'`)
     card.innerHTML = `
       <div class="card-image">
-        <img src="${imgSrc}" alt="${escapeHtml(extractTitle(article.html))}">
+        <img src="${imgSrc}" alt="${escapeHtml(extractTitle(article.html))}" loading="lazy">
       </div>
       <div class="card-content">
         <h3>${escapeHtml(extractTitle(article.html))}</h3>
@@ -406,37 +406,7 @@ async function renderMasonry(items) {
   }
 }
 
-function estimateImageRatios(items) {
-  const placeholder = 'https://placehold.co/600x400?text=No+Image'
-  const promises = items.map(item => {
-    return new Promise(resolve => {
-      const src = item.title_image || placeholder
-      const img = new Image()
-      let settled = false
-      img.onload = () => {
-        if (settled) return
-        settled = true
-        const ratio = (img.naturalHeight && img.naturalWidth) ? (img.naturalHeight / img.naturalWidth) : 0.75
-        resolve({ item, ratio })
-      }
-      img.onerror = () => {
-        if (settled) return
-        settled = true
-        resolve({ item, ratio: 0.75 })
-      }
-      img.src = src
-      setTimeout(() => {
-        if (!settled) {
-          settled = true
-          resolve({ item, ratio: 0.75 })
-        }
-      }, 3000)
-    })
-  })
-  return Promise.all(promises)
-}
-
-async function appendToMasonry(items) {
+function appendToMasonry(items) {
   if (!newsGrid || !items.length) return
 
   const columns = newsGrid.querySelectorAll('.news-column')
@@ -447,15 +417,16 @@ async function appendToMasonry(items) {
     height: el.getBoundingClientRect().height
   }))
 
-  const itemsWithRatios = await estimateImageRatios(items)
   const containerWidth = newsGrid.clientWidth || window.innerWidth
   const GAP = 24
   const totalGapWidth = GAP * (cols.length - 1)
   const columnWidth = (containerWidth - totalGapWidth) / cols.length
   const CONTENT_OVERHEAD = 84
+  const DEFAULT_RATIO = 0.75
 
-  for (const { item, ratio } of itemsWithRatios) {
-    const estImgHeight = ratio && ratio > 0 ? Math.round(columnWidth * ratio) : Math.round(columnWidth * 0.66)
+  for (const article of items) {
+    const ratio = article.image_aspect_ratio || DEFAULT_RATIO
+    const estImgHeight = Math.round(columnWidth * ratio)
     const estimatedCardHeight = estImgHeight + CONTENT_OVERHEAD
 
     let minIdx = 0
@@ -467,7 +438,6 @@ async function appendToMasonry(items) {
       }
     }
 
-    const article = item
     const imgSrc = article.title_image || 'https://placehold.co/600x400?text=No+Image'
     const card = document.createElement('div')
     card.className = 'news-card'
@@ -475,7 +445,7 @@ async function appendToMasonry(items) {
     card.setAttribute('onclick', `window.location.href='/article-view/?id=${article.id}'`)
     card.innerHTML = `
       <div class="card-image">
-        <img src="${imgSrc}" alt="${escapeHtml(extractTitle(article.html))}">
+        <img src="${imgSrc}" alt="${escapeHtml(extractTitle(article.html))}" loading="lazy">
       </div>
       <div class="card-content">
         <h3>${escapeHtml(extractTitle(article.html))}</h3>
@@ -562,8 +532,11 @@ createNewBtn?.addEventListener('click', () => window.location.href = '/drafts-vi
 
 async function init() {
   setupSidebarEvents()
-  await checkAuthAndRole()
-  await loadPublishedArticles()
+  // Run auth check and article loading in parallel
+  await Promise.all([
+    checkAuthAndRole(),
+    loadPublishedArticles()
+  ])
   setupSearch()
 }
 

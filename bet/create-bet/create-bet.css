@@ -141,10 +141,15 @@
   flex-wrap: wrap;
   align-items: center;
 }
-.deadline-row input[type="date"] {
+.date-picker {
+  display: flex;
+  gap: 8px;
   flex: 1;
-  min-width: 160px;
-  padding: 16px 20px;
+  min-width: 280px;
+}
+.date-picker select {
+  flex: 1;
+  padding: 16px 12px;
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.08);
   background: #0c1220;
@@ -153,14 +158,17 @@
   outline: none;
   transition: all 0.25s ease;
   font-family: inherit;
+  cursor: pointer;
 }
-.deadline-row input[type="date"]:focus {
+.date-picker select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.15);
 }
-.deadline-row input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  cursor: pointer;
+.date-picker select#deadlineMonth {
+  min-width: 120px;
+}
+.date-picker select#deadlineDay {
+  min-width: 70px;
 }
 
 .time-picker {

@@ -248,6 +248,16 @@
 .outcome-pill.winner {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: white;
+}
+.outcome-pill.user-choice {
+  background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
+  color: #0a0a0a;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+}
+.outcome-pill:not(.clickable):not(.winner):not(.user-choice) {
+  opacity: 0.5;
+  cursor: not-allowed;
   border-color: #22c55e;
 }
 .outcome-pill:not(.clickable):not(.winner) {
