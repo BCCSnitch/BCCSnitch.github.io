@@ -20,7 +20,6 @@ const outcomesContainer = document.getElementById('outcomesContainer')
 const dropdownBtn = document.getElementById('dropdown-btn')
 const dropdownMenu = document.getElementById('dropdown-menu')
 const dropdownAccount = document.getElementById('dropdown-account')
-const marketBtn = document.getElementById('marketBtn')
 const deadlineMonth = document.getElementById('deadlineMonth')
 const deadlineDay = document.getElementById('deadlineDay')
 

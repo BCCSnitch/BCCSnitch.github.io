@@ -183,10 +183,10 @@ async function loadMarkets() {
         const isWinner = status === 'resolved' && bet.winning_outcome === o
         const isUserChoice = userExistingBet && userExistingBet.outcome === o
         const canClick = isOpen && (!userExistingBet || isUserChoice)
-        const pillClass = isWinner ? 'outcome-pill winner' : 'outcome-pill' + (canClick ? ' clickable' : '') + (isUserChoice ? ' user-choice' : '')
+        const pillClass = 'outcome-pill' + (isWinner ? ' winner': '') + (canClick ? ' clickable' : '') + (isUserChoice ? ' user-choice' : '')
         const count = marketStats[o] || 0
         const pct = totalBets > 0 ? Math.round((count / totalBets) * 100) : 0
-        return `<div class="${pillClass}" data-bet-id="${bet.id}" data-outcome="${escapeHtml(o)}">${escapeHtml(o)}${isWinner ? ' ✅' : ''}<span class="pill-stats">${pct}%</span></div>`
+        return `<div class="${pillClass}" data-bet-id="${bet.id}" data-outcome="${escapeHtml(o)}">${escapeHtml(o)}<span class="pill-stats">${pct}%</span></div>`
       }).join('')
 
       wrapper.innerHTML = `
