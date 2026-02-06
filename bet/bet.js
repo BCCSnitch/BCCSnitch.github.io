@@ -19,7 +19,6 @@ const dropdownBtn = document.getElementById('dropdown-btn')
 const dropdownMenu = document.getElementById('dropdown-menu')
 const dropdownCreateBet = document.getElementById('dropdown-createBet')
 const dropdownAccount = document.getElementById('dropdown-account')
-const homeBtn = document.getElementById('homeBtn')
 
 let currentUser = null
 let currentRole = null
@@ -231,6 +230,7 @@ async function loadMarkets() {
         const inputRow = btn.closest('.bet-input-row')
         inputRow.style.display = 'none'
         inputRow.closest('.market-card').querySelectorAll('.outcome-pill').forEach(p => p.classList.remove('selected'))
+
       })
     })
 

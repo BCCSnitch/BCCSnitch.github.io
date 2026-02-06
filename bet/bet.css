@@ -205,19 +205,24 @@
   color: var(--muted);
   opacity: 0.8;
 }
-.outcome-pill.clickable:hover {
+.outcome-pill.clickable:hover, .selected {
   background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
   color: #0a0a0a;
-  border: 2px solid #241d1a;
+  border: 1px solid #231d1a;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
   transform: scale(1.03);
 }
-.outcome-pill.clickable:hover .pill-stats {
+.outcome-pill.clickable:hover .pill-stats, .selected .pill-stats {
   color: #0a0a0a;
 }
 .outcome-pill.user-choice:not(.winner) {
   background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
   color: #0a0a0a;
-  border: 2px solid #241d5a;
+  border: 1px solid #241d1a;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+}
+.outcome-pill.user-choice:not(.winner):hover, .user-choice:not(.winner).selected {
+  transform: scale(1.03);
 }
 .outcome-pill.user-choice .pill-stats {
   color: #0a0a0a;
@@ -228,7 +233,8 @@
 .outcome-pill.winner {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: white;
-  border: 2px solid #241d2a;
+  border: 1px solid #241d1a;
+  box-shadow: 0 0 12px #22c55e66;
 }
 .winner-label {
   color: #22c55e;
