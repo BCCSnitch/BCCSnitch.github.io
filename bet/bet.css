@@ -1,9 +1,13 @@
+:root {
+  --accent: #eab308;
+  --muted: #6b7280;
+  --text: #f3f4f6;
+}
 .layout.single-column {
   display: block;
   max-width: 800px;
   margin: 2rem auto 0;
 }
-
 .bet-hero {
   background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
   border-radius: 20px;
@@ -43,7 +47,6 @@
   font-size: 1rem;
   margin: 0;
 }
-
 .wallet-card {
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
   border-radius: 16px;
@@ -205,7 +208,7 @@
 .outcome-pill.clickable:hover {
   background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
   color: #0a0a0a;
-  border-color: var(--accent);
+  border: 2px solid #241d1a;
   transform: scale(1.03);
 }
 .outcome-pill.clickable:hover .pill-stats {
@@ -214,8 +217,7 @@
 .outcome-pill.user-choice:not(.winner) {
   background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
   color: #0a0a0a;
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+  border: 2px solid #241d5a;
 }
 .outcome-pill.user-choice .pill-stats {
   color: #0a0a0a;
@@ -226,15 +228,14 @@
 .outcome-pill.winner {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: white;
+  border: 2px solid #241d2a;
 }
-
 .winner-label {
   color: #22c55e;
   font-weight: 600;
   font-size: 0.9rem;
   margin-top: 8px;
 }
-
 .bet-input-row {
   display: flex;
   align-items: center;
