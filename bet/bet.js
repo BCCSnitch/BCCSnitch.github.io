@@ -7,7 +7,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 // DOM elements
 const accountBtn = document.getElementById('account')
 const createBetBtn = document.getElementById('createBetBtn')
-const balanceEl = document.getElementById('balance')
+const balance = document.getElementById('balance')
+const maxBalance = document.getElementById('maxBalance')
 const marketsList = document.getElementById('marketsList')
 const sidebar = document.getElementById('accountSidebar')
 const closeSidebar = document.getElementById('closeSidebar')
@@ -107,13 +108,18 @@ async function checkSessionAndInit() {
     
     const { data: balRow } = await supabase
       .from('user_balances')
-      .select('amount')
-      .eq('user_id', user.id)
-      .single()
+      .select('amount, user_id')
 
+    let max = 0;
     if (balRow) {
-      balanceEl.textContent = `$${Number(balRow.amount).toLocaleString()}`
-    }
+      for (let i = 0; i < balRow.length; i++) {
+        if(balRow[i].user_id == user.id) {
+          balance.textContent = `$${balRow[i].amount.toLocaleString()}`
+        }
+        max = Math.max(max, balRow[i].amount)
+      }
+      maxBalance.textContent = `$${max.toLocaleString()}`
+    } 
   } catch (err) {
     console.error('Session init error', err)
     window.location.href = '/'
@@ -271,7 +277,8 @@ async function loadMarkets() {
           .eq('user_id', currentUser.id)
           .single()
         if (balRow) {
-          balanceEl.textContent = `$${Number(balRow.amount).toLocaleString()}`
+          balance.textContent = `$${Number(balRow.amount).toLocaleString()}`
+          
         }
       })
     })
@@ -291,7 +298,7 @@ async function loadMarkets() {
               .eq('user_id', currentUser.id)
               .single()
             if (balRow) {
-              balanceEl.textContent = `$${Number(balRow.amount).toLocaleString()}`
+              balance.textContent = `$${Number(balRow.amount).toLocaleString()}`
             }
           }
         })

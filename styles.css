@@ -524,7 +524,6 @@ footer {
   .hero .meta { margin-top: 8px }
   .hero { margin-bottom: 18px }
   
-  /* Show dropdown button on mobile when logged in (main page) */
   .dropdown-btn.logged-in {
     display: flex !important;
   }
