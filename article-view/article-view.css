@@ -188,3 +188,15 @@ footer {
     font-size: 1.75rem;
   }
 }
+
+@media (max-width: 800px) {
+  .dropdown-btn {
+    display: flex !important;
+  }
+
+  #nav > #homeBtn,
+  #nav > #deleteArticleBtn,
+  #nav > #account {
+    display: none !important;
+  }
+}
