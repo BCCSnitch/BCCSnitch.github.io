@@ -10,16 +10,27 @@ const authorEl = document.getElementById('author')
 const dateEl = document.getElementById('date')
 const viewsEl = document.getElementById('views')
 const articleEl = document.getElementById('article')
-const returnHomeBtn = document.getElementById('returnHome')
+const bottomHomeBtn = document.getElementById('bottomHomeBtn')
 const titleImage = document.getElementById('titleImage')
-const adminActionsContainer = document.createElement('div')
-
-adminActionsContainer.style.marginTop = '2rem'
-articleEl.parentNode.insertBefore(adminActionsContainer, returnHomeBtn)
+const deleteArticleBtn = document.getElementById('deleteArticleBtn')
+const dropdownDeleteArticleBtn = document.getElementById('dropdown-deleteArticleBtn')
+const accountBtn = document.getElementById('account')
+const dropdownBtn = document.getElementById('dropdown-btn')
+const dropdownMenu = document.getElementById('dropdown-menu')
+const dropdownAccount = document.getElementById('dropdown-account')
+const logoutBtn = document.getElementById('logout')
+const sidebar = document.getElementById('accountSidebar')
+const closeSidebar = document.getElementById('closeSidebar')
+const userEmail = document.getElementById('userEmail')
+const avatar = document.getElementById('avatar')
+const overlay = document.getElementById('overlay')
 
 let currentUser = null
+let currentArticleId = null
 
-returnHomeBtn.addEventListener('click', () => (window.location.href = '/'))
+bottomHomeBtn?.addEventListener('click', () => {
+  window.location.href = '/'
+})
 
 const urlParams = new URLSearchParams(window.location.search)
 const articleId = urlParams.get('id')
@@ -45,6 +56,8 @@ async function loadArticle() {
       return
     }
 
+    currentArticleId = article.id
+
     const { title, cleanedHtml } = extractAndCleanArticle(article.html)
 
     titleEl.textContent = title
@@ -66,6 +79,98 @@ async function loadArticle() {
     console.error('Error loading article:', err)
     articleEl.innerHTML = '<p>Error loading article.</p>'
   }
+}
+
+function setupSidebarEvents() {
+  accountBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('open')
+    overlay?.classList.add('active')
+  })
+
+  closeSidebar?.addEventListener('click', () => {
+    sidebar?.classList.remove('open')
+    overlay?.classList.remove('active')
+  })
+
+  overlay?.addEventListener('click', () => {
+    sidebar?.classList.remove('open')
+    overlay?.classList.remove('active')
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+  })
+
+  logoutBtn?.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
+      sidebar?.classList.remove('open')
+      overlay?.classList.remove('active')
+      location.reload()
+    }
+  })
+
+  dropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    dropdownBtn.classList.toggle('active')
+    dropdownMenu?.classList.toggle('open')
+  })
+
+  dropdownAccount?.addEventListener('click', () => {
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+    sidebar?.classList.add('open')
+    overlay?.classList.add('active')
+  })
+
+  document.addEventListener('click', (e) => {
+    if (!dropdownMenu?.contains(e.target) && !dropdownBtn?.contains(e.target)) {
+      dropdownMenu?.classList.remove('open')
+      dropdownBtn?.classList.remove('active')
+    }
+  })
+}
+
+async function setupAccountUi() {
+  try {
+    const { data } = await supabase.auth.getSession()
+    const session = data?.session ?? null
+    const user = session?.user ?? null
+
+    if (!user) {
+      accountBtn.style.display = 'none'
+      if (dropdownAccount) dropdownAccount.style.display = 'none'
+      return
+    }
+
+    accountBtn.style.display = ''
+    if (dropdownAccount) dropdownAccount.style.display = ''
+    userEmail.textContent = user.email || ''
+    avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
+  } catch (err) {
+    console.error('Error setting account UI', err)
+  }
+}
+
+function bindDeleteButtons(articleId) {
+  const runDelete = async () => {
+    const confirmed = confirm(
+      '⚠️ Are you sure you want to DELETE this article? This action cannot be undone.'
+    )
+    if (!confirmed) return
+
+    await deleteArticleImages(articleEl.innerHTML, 'Images', titleImage.src)
+
+    const { error } = await supabase.from('articles').delete().eq('id', articleId)
+    if (error) {
+      alert('Error deleting article')
+      console.error(error)
+    } else {
+      alert('Article deleted')
+      window.location.href = '/'
+    }
+  }
+
+  deleteArticleBtn?.addEventListener('click', runDelete)
+  dropdownDeleteArticleBtn?.addEventListener('click', runDelete)
 }
 
 async function incrementViews(id) {
@@ -97,33 +202,9 @@ async function checkAdminAndRenderDelete(articleId) {
     if (rolesErr || !rolesData) return
     if (!rolesData.some(r => r.role === 'Admin')) return
 
-    const deleteBtn = document.createElement('button')
-    deleteBtn.textContent = 'Delete Article'
-    deleteBtn.className = 'return-btn'
-    deleteBtn.style.background = '#dc2626'
-    deleteBtn.style.color = '#fff'
-    deleteBtn.style.fontSize = '0.9rem'
-
-    deleteBtn.addEventListener('click', async () => {
-      const confirmed = confirm(
-        '⚠️ Are you sure you want to DELETE this article? This action cannot be undone.'
-      )
-      if (!confirmed) return
-      
-      // Delete images first, then delete the article record
-      await deleteArticleImages(articleEl.innerHTML, "Images", titleImage.src);
-
-      const { error } = await supabase.from('articles').delete().eq('id', articleId)
-      if (error) {
-        alert('Error deleting article')
-        console.error(error)
-      } else {
-        alert('Article deleted')
-        window.location.href = '/'
-      }
-    })
-
-    adminActionsContainer.appendChild(deleteBtn)
+    if (deleteArticleBtn) deleteArticleBtn.style.display = ''
+    if (dropdownDeleteArticleBtn) dropdownDeleteArticleBtn.style.display = ''
+    bindDeleteButtons(articleId)
   } catch (err) {
     console.error('Error checking admin role', err)
   }
@@ -189,4 +270,6 @@ async function deleteArticleImages(html, bucket = 'Images', title_image = null) 
   }
 }
 
+setupSidebarEvents()
+setupAccountUi()
 loadArticle()

@@ -4,31 +4,77 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Drafts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="./drafts.css">
     <link rel="icon" type="image/png" href="/favicon.png">
   </head>
   <body>
-    <main class="page">
-      <header class="top">
-        <h1>Drafts</h1>
-        <div class="controls">
-          <button onclick="window.location.href='/'" class="ghost">Back</button>
-          <button id="newBtn" class="primary">Create New</button>
-          <button id="refreshBtn" class="primary">Refresh</button>
-        </div>
-      </header>
-      <section class="lists">
-        <div class="list-block">
-          <h2>Your Drafts</h2>
-          <div id="myDrafts" class="list"></div>
-        </div>
-        <div id="otherBlock" class="list-block" style="display:none">
-          <h2>Other people's drafts</h2>
-          <div id="otherDrafts" class="list"></div>
-        </div>
-      </section>
-      <div id="msg" class="msg"></div>
-    </main>
+    <div id="outerContainer" class="container">
+      <div id="innerContainer" class="container">
+        <header>
+          <div class="brand"><img src="/favicon.png" alt="The Snitch logo" class="brand-logo"><h1>The Snitch</h1></div>
+          <nav id="nav">
+            <button id="homeBtn" onclick="window.location.href='/'">Home</button>
+            <button id="newBtn">Create New</button>
+            <button id="refreshBtn">Refresh</button>
+            <button id="account" style="display:none;">Account</button>
+            <button id="dropdown-btn" class="dropdown-btn" style="display:none;" aria-label="Menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+            <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
+              <img src="/instagramIcon.png" alt="Instagram Link">
+            </a>
+            <div id="dropdown-menu" class="dropdown-menu">
+              <button onclick="window.location.href='/'">Home</button>
+              <button id="dropdown-newBtn">Create New</button>
+              <button id="dropdown-refreshBtn">Refresh</button>
+              <button id="dropdown-account" style="display:none;">Account</button>
+            </div>
+          </nav>
+        </header>
+
+        <main class="layout single-column">
+          <section class="main-content">
+            <div class="drafts-hero">
+              <div class="icon">📄</div>
+              <h2>Drafts</h2>
+              <p class="subtitle">Manage in-progress articles</p>
+            </div>
+
+            <section id="listsWrap" class="lists">
+              <div class="list-block">
+                <h3>Your Drafts</h3>
+                <div id="myDrafts" class="list"></div>
+              </div>
+              <div id="otherBlock" class="list-block" style="display:none">
+                <h3>Other Drafts</h3>
+                <div id="otherDrafts" class="list"></div>
+              </div>
+            </section>
+
+            <div id="msg" class="msg"></div>
+          </section>
+        </main>
+
+        <div id="overlay" class="overlay"></div>
+        <aside class="account-sidebar" id="accountSidebar">
+          <button class="close-btn" id="closeSidebar">×</button>
+          <div class="account-header">
+            <img id="avatar" alt="User Avatar" class="avatar">
+            <h2>My Account</h2>
+            <p class="email" id="userEmail"></p>
+          </div>
+          <button class="logout-btn" id="logout">Sign Out</button>
+        </aside>
+
+        <footer><p>© 2025 The Snitch · America's Finest News Source</p></footer>
+      </div>
+    </div>
     <script type="module" src="./drafts.js"></script>
   </body>
 </html>

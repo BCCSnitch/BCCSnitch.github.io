@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const IMAGE_BUCKET = "Images";
 const AUTOSAVE_MS = 5000;
+const PENDING_BODY_IMAGE_DELETES_KEY = 'createArticle.pendingBodyImageDeletes';
 
 // DOM elements
 const editor = document.getElementById("editor");
@@ -138,6 +139,127 @@ const history = {
 function setStatus(t) { if (statusEl) statusEl.textContent = t || ""; }
 function setLastSaved(ts) { if (lastSavedEl) lastSavedEl.textContent = ts ? `Last saved: ${new Date(ts).toLocaleTimeString()}` : "—"; }
 function escapeHtml(s) { return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+function safeFileName(name = 'file') {
+  return String(name)
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function getPublicStoragePathFromUrl(url, bucket = IMAGE_BUCKET) {
+  try {
+    if (!url) return null;
+    const u = new URL(url);
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = u.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(u.pathname.slice(idx + marker.length));
+  } catch {
+    return null;
+  }
+}
+
+async function removeFilesFromBucket(bucket, paths = []) {
+  const normalized = Array.from(new Set((paths || []).filter(Boolean)));
+  if (!normalized.length) return;
+  const { error } = await supabase.storage.from(bucket).remove(normalized);
+  if (error) throw error;
+}
+
+function collectBodyImagePaths() {
+  const paths = new Set();
+  if (!editor) return paths;
+  editor.querySelectorAll('img').forEach((img) => {
+    const fromAttr = img.getAttribute('data-storage-path');
+    const fromSrc = getPublicStoragePathFromUrl(img.getAttribute('src') || '', IMAGE_BUCKET);
+    const path = fromAttr || fromSrc;
+    if (path) {
+      if (!fromAttr) img.setAttribute('data-storage-path', path);
+      paths.add(path);
+    }
+  });
+  return paths;
+}
+
+let knownBodyImagePaths = new Set();
+let bodyImageCleanupTimer = null;
+const pendingBodyImageDeletes = new Set();
+
+function persistPendingBodyImageDeletes() {
+  try {
+    const pending = Array.from(pendingBodyImageDeletes);
+    if (!pending.length) {
+      localStorage.removeItem(PENDING_BODY_IMAGE_DELETES_KEY);
+      return;
+    }
+    localStorage.setItem(PENDING_BODY_IMAGE_DELETES_KEY, JSON.stringify(pending));
+  } catch (err) {
+    console.warn('Failed to persist pending body image deletes', err);
+  }
+}
+
+function hydratePendingBodyImageDeletes() {
+  try {
+    const raw = localStorage.getItem(PENDING_BODY_IMAGE_DELETES_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+    parsed.filter(Boolean).forEach((path) => pendingBodyImageDeletes.add(path));
+  } catch (err) {
+    console.warn('Failed to hydrate pending body image deletes', err);
+  }
+}
+
+function syncRemovedBodyImagesToStorage() {
+  const currentPaths = collectBodyImagePaths();
+  let changed = false;
+
+  for (const activePath of currentPaths) {
+    if (pendingBodyImageDeletes.delete(activePath)) changed = true;
+  }
+
+  for (const oldPath of knownBodyImagePaths) {
+    if (!currentPaths.has(oldPath)) {
+      const before = pendingBodyImageDeletes.size;
+      pendingBodyImageDeletes.add(oldPath);
+      if (pendingBodyImageDeletes.size !== before) changed = true;
+    }
+  }
+
+  knownBodyImagePaths = currentPaths;
+  if (changed) persistPendingBodyImageDeletes();
+}
+
+async function flushPendingBodyImageDeletes() {
+  if (!pendingBodyImageDeletes.size) return;
+  const currentPaths = collectBodyImagePaths();
+  const deletable = [];
+  for (const path of pendingBodyImageDeletes) {
+    if (!currentPaths.has(path)) deletable.push(path);
+  }
+  if (!deletable.length) return;
+  try {
+    await removeFilesFromBucket(IMAGE_BUCKET, deletable);
+    deletable.forEach((path) => pendingBodyImageDeletes.delete(path));
+    persistPendingBodyImageDeletes();
+  } catch (err) {
+    console.warn('Failed to flush pending body image deletes', err);
+  }
+}
+
+function queueLeavePageCleanup() {
+  syncRemovedBodyImagesToStorage();
+  persistPendingBodyImageDeletes();
+  flushPendingBodyImageDeletes();
+}
+
+function scheduleBodyImageCleanupSync() {
+  if (bodyImageCleanupTimer) clearTimeout(bodyImageCleanupTimer);
+  bodyImageCleanupTimer = setTimeout(() => {
+    syncRemovedBodyImagesToStorage();
+  }, 250);
+}
 
 // Calculate image aspect ratio (height / width) from a URL
 function getImageAspectRatio(src) {
@@ -555,7 +677,6 @@ function executeScriptCommand(isSuper) {
   }
   
   // Save state and update UI
-  history.saveState(true);
   updateToolbarFromCaret();
   scheduleQuickSave();
 }
@@ -576,25 +697,37 @@ const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 if (undoBtn) {
   undoBtn.addEventListener('click', () => {
-    history.undo();
+    document.execCommand('undo');
+    setTimeout(() => {
+      scheduleBodyImageCleanupSync();
+      updateToolbarState();
+    }, 0);
     scheduleQuickSave();
   });
 }
 if (redoBtn) {
   redoBtn.addEventListener('click', () => {
-    history.redo();
+    document.execCommand('redo');
+    setTimeout(() => {
+      scheduleBodyImageCleanupSync();
+      updateToolbarState();
+    }, 0);
     scheduleQuickSave();
   });
 }
 
 async function uploadFileToBucket(bucket, file, destPrefix = ""){
   if (!supabase) throw new Error('Supabase client unavailable');
-  const safe = (file.name || 'file').replace(/\s+/g,'_');
+  const safe = safeFileName(file.name || 'file');
   const fileName = `${destPrefix}${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safe}`;
   const { data, error } = await supabase.storage.from(bucket).upload(fileName, file);
   if (error) throw error;
-  const { data: urlData } = await supabase.storage.from(bucket).getPublicUrl(data.path || fileName);
-  return urlData?.publicUrl || urlData?.public_url || null;
+  const path = data?.path || fileName;
+  const { data: urlData } = await supabase.storage.from(bucket).getPublicUrl(path);
+  return {
+    path,
+    publicUrl: urlData?.publicUrl || urlData?.public_url || null,
+  };
 }
 
 function createMarkerAtSavedRange(){
@@ -652,9 +785,9 @@ if (imageInput) {
 
     setStatus('Uploading image...');
     try {
-      const url = await uploadFileToBucket(IMAGE_BUCKET, f, currentUser?.id ? `${currentUser.id}_` : '');
-      if (!url) throw new Error('No URL returned');
-      const html = `<img src="${url}" style="max-width:100%;margin:8px 0;border-radius:6px">`;
+      const uploaded = await uploadFileToBucket(IMAGE_BUCKET, f, 'body_');
+      if (!uploaded?.publicUrl) throw new Error('No URL returned');
+      const html = `<img src="${uploaded.publicUrl}" data-storage-path="${escapeHtml(uploaded.path)}" style="max-width:100%;margin:8px 0;border-radius:6px">`;
       const inserted = replaceMarkerWithHtml(pendingImageMarkerId, html);
 
       // place caret after the inserted image (best-effort)
@@ -664,6 +797,7 @@ if (imageInput) {
       }
 
       scheduleQuickSave();
+      scheduleBodyImageCleanupSync();
       setStatus('Image uploaded');
     } catch (err) {
       // cleanup marker
@@ -689,9 +823,10 @@ if (editor) {
           const f = it.getAsFile();
           setStatus('Uploading image...');
           try {
-            const url = await uploadFileToBucket(IMAGE_BUCKET, f, currentUser?.id ? `${currentUser.id}_` : '');
-            document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;margin:8px 0;border-radius:6px">`);
+            const uploaded = await uploadFileToBucket(IMAGE_BUCKET, f, 'body_');
+            document.execCommand('insertHTML', false, `<img src="${uploaded.publicUrl}" data-storage-path="${escapeHtml(uploaded.path)}" style="max-width:100%;margin:8px 0;border-radius:6px">`);
             scheduleQuickSave();
+            scheduleBodyImageCleanupSync();
             setStatus('Image uploaded');
           } catch (err) {
             console.error('paste upload failed', err);
@@ -712,9 +847,10 @@ if (editor) {
       if (f.type && f.type.indexOf('image') !== -1) {
         setStatus('Uploading image...');
         try {
-          const url = await uploadFileToBucket(IMAGE_BUCKET, f, currentUser?.id ? `${currentUser.id}_` : '');
-          document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;margin:8px 0;border-radius:6px">`);
+          const uploaded = await uploadFileToBucket(IMAGE_BUCKET, f, 'body_');
+          document.execCommand('insertHTML', false, `<img src="${uploaded.publicUrl}" data-storage-path="${escapeHtml(uploaded.path)}" style="max-width:100%;margin:8px 0;border-radius:6px">`);
           scheduleQuickSave();
+          scheduleBodyImageCleanupSync();
           setStatus('Image uploaded');
         } catch (err) {
           console.error('drop upload failed', err);
@@ -979,6 +1115,9 @@ async function loadDraft() {
       h1.remove();
     } else titleInput.value = 'Untitled';
     editor.innerHTML = tmp.innerHTML || '<p></p>';
+    pendingBodyImageDeletes.clear();
+    persistPendingBodyImageDeletes();
+    knownBodyImagePaths = collectBodyImagePaths();
 
     // 💬 Load title image if available
     if (data.title_image) {
@@ -1055,7 +1194,10 @@ function scheduleQuickSave(){ if (quickSaveTimer) clearTimeout(quickSaveTimer); 
 
 /* Autosave + save on close */
 setInterval(()=>saveDraft(), AUTOSAVE_MS);
-window.addEventListener('beforeunload', ()=>{ try { saveDraft(); } catch(_) {} });
+window.addEventListener('beforeunload', ()=>{ try { saveDraft(); } catch(_) {} queueLeavePageCleanup(); });
+window.addEventListener('pagehide', () => {
+  queueLeavePageCleanup();
+});
 
 async function publishArticle() {
   try {
@@ -1088,6 +1230,8 @@ async function publishArticle() {
 
     if (error) throw error;
 
+    await flushPendingBodyImageDeletes();
+
     if (currentDraftId) {
       await supabase.from('articles_in_progress').delete().eq('id', currentDraftId);
       localStorage.removeItem('editingArticleId');
@@ -1105,7 +1249,7 @@ async function publishArticle() {
   }
 }
 
-if (backBtn) backBtn.addEventListener('click', async ()=>{ await saveDraft(); window.location.href = '/drafts-view/'; });
+if (backBtn) backBtn.addEventListener('click', async ()=>{ await saveDraft(); await flushPendingBodyImageDeletes(); window.location.href = '/drafts-view/'; });
 if (publishBtn) publishBtn.addEventListener('click', (e)=>{ e.preventDefault(); publishArticle(); });
 
 function getElementAtCaret(){
@@ -1328,79 +1472,30 @@ editor.addEventListener('keydown', (ev) => {
   const ok = await checkAuthAndRole();
   if (!ok) return;
 
+  hydratePendingBodyImageDeletes();
+  await flushPendingBodyImageDeletes();
+
   await loadDraft();
   setStatus('Ready');
   updateToolbarState();
 
   if (editor) {
-    // Initialize undo/redo history
-    history.currentContent = editor.innerHTML;
-    history.updateButtons();
-
-    // Add input listener for autosave and clear redo stack
+    // Keep autosave and body-image storage sync aligned with edits.
     editor.addEventListener('input', (e) => {
       scheduleQuickSave();
-      // Clear redo stack immediately when typing occurs
-      if (!history.isProcessing) {
-        history.redoStack = [];
-        history.updateButtons();
-      }
+      scheduleBodyImageCleanupSync();
     });
 
-    // Handle keyboard events for history management
+    // Let native undo/redo run, then reconcile image storage state.
     editor.addEventListener('keydown', (e) => {
-      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
-        e.preventDefault();
-        history.undo();
+      const isUndo = (e.key.toLowerCase() === 'z') && (e.ctrlKey || e.metaKey);
+      const isRedo = ((e.key.toLowerCase() === 'z') && (e.ctrlKey || e.metaKey) && e.shiftKey)
+        || ((e.key.toLowerCase() === 'y') && (e.ctrlKey || e.metaKey));
+      if (!isUndo && !isRedo) return;
+      setTimeout(() => {
+        scheduleBodyImageCleanupSync();
         scheduleQuickSave();
-        return;
-      } else if (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey) {
-        e.preventDefault();
-        history.redo();
-        scheduleQuickSave();
-        return;
-      }
-
-      // Check for word breaks or long pauses
-      const now = Date.now();
-      const timeSinceLastKey = now - history.lastKeyTime;
-      const isWordBreak = history.isWordBreak(e);
-
-      // Save state immediately on word breaks or after long pauses
-      if (isWordBreak || timeSinceLastKey > HISTORY_BATCH_DELAY) {
-        history.saveState(true);
-      } else {
-        // For regular typing, use batched saves
-        history.saveState(false);
-      }
-
-      history.lastKeyTime = now;
-      history.lastWordBreak = isWordBreak;
-    });
-
-    // Save state immediately for formatting commands and other non-typing changes
-    const formatCommands = ['bold', 'italic', 'underline', 'strikeThrough', 
-                          'insertUnorderedList', 'insertOrderedList',
-                          'justifyLeft', 'justifyCenter', 'justifyRight'];
-                          
-    formatCommands.forEach(cmd => {
-      const button = toolbar.querySelector(`[data-cmd="${cmd}"]`);
-      if (button) {
-        const originalClick = button.onclick;
-        button.onclick = (e) => {
-          if (originalClick) originalClick.call(button, e);
-          history.saveState(true);
-        };
-      }
-    });
-
-    // Save state immediately when focus is lost
-    editor.addEventListener('blur', () => {
-      if (history.batchTimer) {
-        clearTimeout(history.batchTimer);
-        history.batchTimer = null;
-        history.saveState(true);
-      }
+      }, 0);
     });
   }
 })();
@@ -1473,6 +1568,8 @@ async function handleImageUpload(file) {
     return;
   }
 
+  const previousTitleImagePath = getPublicStoragePathFromUrl(window.titleImage, IMAGE_BUCKET);
+
   const reader = new FileReader();
   reader.onload = (e) => {
     previewImg.src = e.target.result;
@@ -1480,10 +1577,10 @@ async function handleImageUpload(file) {
   };
   reader.readAsDataURL(file);
 
-  const fileName = `title_${Date.now()}_${file.name}`;
+  const fileName = `title_${Date.now()}_${safeFileName(file.name)}`;
   const { data, error } = await supabase.storage
     .from('Images')
-    .upload(fileName, file, { upsert: true });
+    .upload(fileName, file, { upsert: false });
 
   if (error) {
     console.error('Upload failed:', error);
@@ -1491,15 +1588,24 @@ async function handleImageUpload(file) {
     return;
   }
 
+  const uploadedPath = data?.path || fileName;
   const { data: publicUrlData } = supabase.storage
     .from('Images')
-    .getPublicUrl(fileName);
+    .getPublicUrl(uploadedPath);
 
   const publicUrl = publicUrlData?.publicUrl;
   console.log('Image uploaded:', publicUrl);
 
   window.titleImage = publicUrl;
   uploadText.textContent = '✅ Image Uploaded';
+
+  if (previousTitleImagePath && previousTitleImagePath !== uploadedPath) {
+    try {
+      await removeFilesFromBucket(IMAGE_BUCKET, [previousTitleImagePath]);
+    } catch (err) {
+      console.warn('Failed to delete replaced title image', err);
+    }
+  }
 }
 
 function sanitizeColors(node) {
@@ -1522,7 +1628,7 @@ async function sanitize(html) {
   restoreSelection()
 
   const imgs = Array.from(temp.querySelectorAll("img"));
-  const hashMap = {};
+  const hashMap = new Map();
   let imgIndex = 0;
 
   for (const img of imgs) {
@@ -1536,8 +1642,10 @@ async function sanitize(html) {
 
       // hash to deduplicate
       const hash = await hashBlob(blob);
-      if (hashMap[hash]) {
-        img.src = hashMap[hash];
+      if (hashMap.has(hash)) {
+        const existing = hashMap.get(hash);
+        img.src = existing.publicUrl;
+        img.setAttribute('data-storage-path', existing.path);
         continue;
       }
 
@@ -1545,23 +1653,13 @@ async function sanitize(html) {
       let type = blob.type || "application/octet-stream";
       let ext = type.split("/")[1] || "bin";
 
-      const fileName = `${hash}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("Images")
-        .upload(fileName, blob, { upsert: true });
+      const uploadFile = new File([blob], `pasted.${ext}`, { type });
+      const uploaded = await uploadFileToBucket(IMAGE_BUCKET, uploadFile, 'body_');
+      if (!uploaded?.publicUrl || !uploaded?.path) continue;
 
-      if (uploadErr) {
-        console.error("Upload failed for", fileName, uploadErr);
-        continue;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("Images")
-        .getPublicUrl(fileName);
-
-      const publicUrl = publicUrlData?.publicUrl || "";
-      hashMap[hash] = publicUrl;
-      img.src = publicUrl;
+      hashMap.set(hash, uploaded);
+      img.src = uploaded.publicUrl;
+      img.setAttribute('data-storage-path', uploaded.path);
       imgIndex++;
     } catch (err) {
       console.error("Image processing failed", err);
@@ -1570,10 +1668,19 @@ async function sanitize(html) {
 
   document.execCommand("insertHTML", false, `<div style="color:white;">${temp.innerHTML}</div>`);
   scheduleQuickSave();
+  scheduleBodyImageCleanupSync();
 }
 
 editor.addEventListener("paste", (e) => {
+  if (e.defaultPrevented) return;
   e.preventDefault();
   let html = e.clipboardData.getData("text/html") || e.clipboardData.getData("text/plain");
   sanitize(html);
 });
+
+if (editor) {
+  const observer = new MutationObserver(() => {
+    scheduleBodyImageCleanupSync();
+  });
+  observer.observe(editor, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'data-storage-path'] });
+}

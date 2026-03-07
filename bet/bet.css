@@ -3,7 +3,7 @@
   --muted: #6b7280;
   --text: #f3f4f6;
 }
-.layout.single-column {
+.layout {
   display: block;
   max-width: 800px;
   margin: 2rem auto 0;
@@ -51,21 +51,20 @@
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
   border-radius: 16px;
   padding: 24px 28px;
-  margin-bottom: 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: 16px;
 }
-.wallet-card .wallet-label {
+.wallet-label {
   font-size: 0.9rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
 }
-.wallet-card .wallet-balance {
+.wallet-balance {
   font-size: 2rem;
   font-weight: 700;
   color: #22c55e;

@@ -11,9 +11,69 @@ const otherBlock = document.getElementById("otherBlock");
 const newBtn = document.getElementById("newBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const msgEl = document.getElementById("msg");
+const dropdownNewBtn = document.getElementById("dropdown-newBtn");
+const dropdownRefreshBtn = document.getElementById("dropdown-refreshBtn");
+const accountBtn = document.getElementById('account')
+const dropdownBtn = document.getElementById('dropdown-btn')
+const dropdownMenu = document.getElementById('dropdown-menu')
+const dropdownAccount = document.getElementById('dropdown-account')
+const sidebar = document.getElementById('accountSidebar')
+const closeSidebar = document.getElementById('closeSidebar')
+const overlay = document.getElementById('overlay')
+const logoutBtn = document.getElementById('logout')
+const userEmail = document.getElementById('userEmail')
+const avatar = document.getElementById('avatar')
 
 let currentUser = null;
 let userRole = null;
+
+function setupSidebarEvents() {
+  accountBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('open')
+    overlay?.classList.add('active')
+  })
+
+  closeSidebar?.addEventListener('click', () => {
+    sidebar?.classList.remove('open')
+    overlay?.classList.remove('active')
+  })
+
+  overlay?.addEventListener('click', () => {
+    sidebar?.classList.remove('open')
+    overlay?.classList.remove('active')
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+  })
+
+  dropdownBtn?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    dropdownBtn.classList.toggle('active')
+    dropdownMenu?.classList.toggle('open')
+  })
+
+  dropdownAccount?.addEventListener('click', () => {
+    dropdownMenu?.classList.remove('open')
+    dropdownBtn?.classList.remove('active')
+    sidebar?.classList.add('open')
+    overlay?.classList.add('active')
+  })
+
+  document.addEventListener('click', (e) => {
+    if (!dropdownMenu?.contains(e.target) && !dropdownBtn?.contains(e.target)) {
+      dropdownMenu?.classList.remove('open')
+      dropdownBtn?.classList.remove('active')
+    }
+  })
+
+  logoutBtn?.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
+      sidebar?.classList.remove('open')
+      overlay?.classList.remove('active')
+      window.location.href = '/'
+    }
+  })
+}
 
 function escapeHtml(s = "") {
   return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -32,6 +92,14 @@ function extractTitleFromHtml(html) {
   return text.slice(0, 80);
 }
 
+function ensureEmptyState(listEl, message) {
+  if (!listEl) return;
+  const hasItems = Array.from(listEl.children).some((child) => child.classList?.contains('item'));
+  if (!hasItems) {
+    listEl.innerHTML = `<div class='item' style='opacity:.7'>${escapeHtml(message)}</div>`;
+  }
+}
+
 async function checkAuthAndRole() {
   const { data } = await supabase.auth.getSession();
   const session = data?.session ?? null;
@@ -42,6 +110,15 @@ async function checkAuthAndRole() {
       return false;
   }
   currentUser = user;
+
+  accountBtn.style.display = ''
+  if (dropdownAccount) dropdownAccount.style.display = ''
+  if (dropdownBtn) {
+    dropdownBtn.style.display = ''
+    dropdownBtn.classList.add('logged-in')
+  }
+  if (userEmail) userEmail.textContent = user.email || ''
+  if (avatar) avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
 
   // read roles
   const { data: rolesData, error: rolesErr } = await supabase
@@ -132,7 +209,10 @@ async function loadMyDrafts() {
             
             // Remove the item from the UI
             item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => item.remove(), 300);
+            setTimeout(() => {
+              item.remove();
+              ensureEmptyState(myDraftsEl, "No drafts — click Create New");
+            }, 300);
         } catch (err) {
             console.error('Failed to delete draft:', err);
             alert('Failed to delete draft. Please try again.');
@@ -214,7 +294,10 @@ async function loadOtherDrafts() {
             
             // Remove the item from the UI
             item.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => item.remove(), 300);
+            setTimeout(() => {
+              item.remove();
+              ensureEmptyState(otherDraftsEl, "No other drafts");
+            }, 300);
         } catch (err) {
             console.error('Failed to delete draft:', err);
             alert('Failed to delete draft. Please try again.');
@@ -257,12 +340,26 @@ newBtn.addEventListener("click", async () => {
   await createNewDraftAndOpen();
 });
 
+dropdownNewBtn?.addEventListener("click", async () => {
+  dropdownMenu?.classList.remove('open')
+  dropdownBtn?.classList.remove('active')
+  await createNewDraftAndOpen();
+});
+
 refreshBtn.addEventListener("click", () => {
   loadMyDrafts();
   if (userRole === "Admin") loadOtherDrafts();
 });
 
+dropdownRefreshBtn?.addEventListener("click", () => {
+  dropdownMenu?.classList.remove('open')
+  dropdownBtn?.classList.remove('active')
+  loadMyDrafts();
+  if (userRole === "Admin") loadOtherDrafts();
+});
+
 (async function init() {
+  setupSidebarEvents();
   msgEl.textContent = "";
   const ok = await checkAuthAndRole();
   if (!ok) return;

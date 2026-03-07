@@ -54,6 +54,20 @@ header {
   margin: 0;
 }
 
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: block;
+  flex-shrink: 0;
+}
+
 #nav {
   display: flex;
   align-items: center;

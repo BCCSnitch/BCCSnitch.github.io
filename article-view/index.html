@@ -4,35 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Snitch — Article</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="./article-view.css">
   </head>
   <body>
-    <div class="container">
-      <header>
-        <div class="brand" onclick="window.location.href='/'">
-          <h1>The Snitch</h1>
-        </div>
-      </header>
-      <main class="article-layout">
-        <section class="article-card">
-          <img id="titleImage" class="title-image" alt="Article image" style="display:none;">
-          <h1 id="title" class="article-title">Loading...</h1>
-          <div class="meta">
-            <span id="author"></span>
-            <span id="date"></span>
-            <span id="views"></span>
+    <div id="outerContainer" class="container">
+      <div id="innerContainer" class="container">
+        <header>
+          <div class="brand" onclick="window.location.href='/'"><img src="/favicon.png" alt="The Snitch logo" class="brand-logo"><h1>The Snitch</h1></div>
+          <nav id="nav">
+            <button id="homeBtn" onclick="window.location.href='/'">Home</button>
+            <button id="deleteArticleBtn" style="display:none;">Delete Article</button>
+            <button id="account" style="display:none;">Account</button>
+            <button id="dropdown-btn" class="dropdown-btn" aria-label="Menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+            <a href="http://instagram.com/bccsnitch/" style="margin-right: 15px;" target="_blank">
+              <img src="/instagramIcon.png" alt="Instagram Link">
+            </a>
+            <div id="dropdown-menu" class="dropdown-menu">
+              <button id="dropdown-deleteArticleBtn" style="display:none;">Delete Article</button>
+              <button onclick="window.location.href='/'">Home</button>
+              <button id="dropdown-account" style="display:none;">Account</button>
+            </div>
+          </nav>
+        </header>
+
+        <main class="article-layout">
+          <section class="article-card">
+            <img id="titleImage" class="title-image" alt="Article image" style="display:none;">
+            <h1 id="title" class="article-title">Loading...</h1>
+            <div class="meta">
+              <span id="author"></span><span id="date"></span><span id="views"></span>
+            </div>
+            <div id="article" class="article-body">
+              <p>Loading article content...</p>
+            </div>
+            <div class="bottom-home-wrap">
+              <button id="bottomHomeBtn" class="bottom-home-btn">← Return Home</button>
+            </div>
+          </section>
+        </main>
+
+        <div id="overlay" class="overlay"></div>
+        <aside class="account-sidebar" id="accountSidebar">
+          <button class="close-btn" id="closeSidebar">×</button>
+          <div class="account-header">
+            <img id="avatar" alt="User Avatar" class="avatar">
+            <h2>My Account</h2>
+            <p class="email" id="userEmail"></p>
           </div>
-          <div id="article" class="article-body">
-            <p>Loading article content...</p>
-          </div>
-          <button id="returnHome" class="return-btn">← Return Home</button>
-        </section>
-      </main>
-      <footer>
-        <p>© 2025 The Snitch · America's Finest News Source</p>
-      </footer>
+          <button class="logout-btn" id="logout">Sign Out</button>
+        </aside>
+
+        <footer>
+          <p>© 2025 The Snitch · America's Finest News Source</p>
+        </footer>
+      </div>
     </div>
     <script type="module" src="./article-view.js"></script>
   </body>
