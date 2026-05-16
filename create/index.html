@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="./create-bet.css">
+    <link rel="stylesheet" href="/create/create.css">
   </head>
   <body>
     <div id="outerContainer" class="container">
@@ -17,7 +17,9 @@
         <header>
           <div class="brand"><img src="/favicon.png" alt="The Snitch logo" class="brand-logo"><h1>The Snitch</h1></div>
           <nav id="nav">
-            <button id="marketBtn" onclick="window.location.href='/bet/'">Market</button>
+            <button id="homeBtn" onclick="window.location.href='/'">Home</button>
+            <button id="marketBtn" onclick="window.location.href='/market/'">Market</button>
+            <button id="pollsBtn" onclick="window.location.href='/polls/'">Polls</button>
             <button id="account">Account</button>
             <button id="dropdown-btn" class="dropdown-btn" aria-label="Menu">
               <span></span>
@@ -28,7 +30,9 @@
               <img src="/instagramIcon.png" alt="Instagram Link">
             </a>
             <div id="dropdown-menu" class="dropdown-menu">
-              <button onclick="window.location.href='/bet/'">Market</button>
+              <button onclick="window.location.href='/'">Home</button>
+              <button onclick="window.location.href='/market/'">Market</button>
+              <button onclick="window.location.href='/polls/'">Polls</button>
               <button id="dropdown-account">Account</button>
             </div>
           </nav>
@@ -36,26 +40,30 @@
         <main class="layout single-column">
           <section class="main-content">
             <div class="create-hero">
-              <div class="icon">🎲</div>
-              <h2>Create A Market</h2>
-              <p class="subtitle">Set up a new prediction market for the community to bet on.</p>
+              <div class="icon">✍</div>
+              <h2>Create</h2>
+              <p class="subtitle">Make a poll or a bet for The Snitch community</p>
             </div>
             <div id="formWrap" class="form-card">
-              <h3>New Market Details</h3>
+              <div class="type-row" role="tablist" aria-label="Creation type">
+                <button type="button" id="pollTypeBtn" class="type-btn active" data-type="poll">Poll</button>
+                <button type="button" id="marketTypeBtn" class="type-btn" data-type="market">Market</button>
+              </div>
+              <h3 id="formTitle">Details</h3>
               <form id="createForm" class="create-form">
                 <div class="form-group">
-                  <label for="title">Market Title</label>
-                  <input id="title" placeholder="e.g., Will the basketball team win on Friday?" required />
+                  <label id="titleLabel" for="title">Question</label>
+                  <input id="title" placeholder="e.g., Who had the best spirit week outfit?" required />
                 </div>
                 <div class="form-group">
-                  <label>Outcomes</label>
-                  <div id="outcomesContainer">
+                  <label id="optionsLabel">Options</label>
+                  <div id="optionsContainer">
                     <div class="option-row">
-                      <input class="outcome-input" type="text" placeholder="Option 1" required />
+                      <input class="option-input" type="text" placeholder="Option 1" required />
                       <button type="button" class="remove-option-btn">×</button>
                     </div>
                     <div class="option-row">
-                      <input class="outcome-input" type="text" placeholder="Option 2" required />
+                      <input class="option-input" type="text" placeholder="Option 2" required />
                       <button type="button" class="remove-option-btn">×</button>
                     </div>
                   </div>
@@ -95,7 +103,7 @@
                     </div>
                   </div>
                 </div>
-                <button type="submit" class="btn-primary">Create Market</button>
+                <button type="submit" id="submitBtn" class="btn-primary">Create</button>
               </form>
               <div id="status"></div>
             </div>
@@ -114,6 +122,6 @@
         <footer><p>© 2025 The Snitch · America's Finest News Source</p></footer>
       </div>
     </div>
-    <script type="module" src="/bet/create-bet/create-bet.js"></script>
+    <script type="module" src="/create/create.js"></script>
   </body>
 </html>

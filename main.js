@@ -8,6 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 const loginBtn = document.getElementById('login')
 const accountBtn = document.getElementById('account')
 const marketBtn = document.getElementById('market')
+const pollsBtn = document.getElementById('polls')
 const createNewBtn = document.getElementById('writer')
 const adminDashboardBtn = document.getElementById('admin')
 const logoutBtn = document.getElementById('logout')
@@ -23,6 +24,7 @@ const dropdownBtn = document.getElementById('dropdown-btn')
 const dropdownMenu = document.getElementById('dropdown-menu')
 const dropdownAdmin = document.getElementById('dropdown-admin')
 const dropdownMarket = document.getElementById('dropdown-market')
+const dropdownPolls = document.getElementById('dropdown-polls')
 const dropdownAccount = document.getElementById('dropdown-account')
 
 let overlay = document.querySelector('.overlay')
@@ -106,12 +108,14 @@ async function checkAuthAndRole() {
       loginBtn.style.display = ''
       accountBtn.style.display = 'none'
       marketBtn.style.display = 'none'
+      pollsBtn.style.display = 'none'
       adminDashboardBtn.style.display = 'none'
       createNewBtn.style.display = 'none'
       // Hide dropdown when not logged in (remove logged-in class)
       if (dropdownBtn) dropdownBtn.classList.remove('logged-in')
       if (dropdownAdmin) dropdownAdmin.style.display = 'none'
       if (dropdownMarket) dropdownMarket.style.display = 'none'
+      if (dropdownPolls) dropdownPolls.style.display = 'none'
       if (dropdownAccount) dropdownAccount.style.display = 'none'
       return
     }
@@ -119,12 +123,14 @@ async function checkAuthAndRole() {
     loginBtn.style.display = 'none'
     accountBtn.style.display = ''
     marketBtn.style.display = ''
+    pollsBtn.style.display = ''
     userEmail.textContent = user.email
     avatar.src = user.user_metadata?.avatar_url || 'https://placehold.co/80x80'
     
     // Show dropdown when logged in (add logged-in class, CSS controls actual display based on size)
     if (dropdownBtn) dropdownBtn.classList.add('logged-in')
     if (dropdownMarket) dropdownMarket.style.display = ''
+    if (dropdownPolls) dropdownPolls.style.display = ''
     if (dropdownAccount) dropdownAccount.style.display = ''
 
     const { data: profile } = await supabase

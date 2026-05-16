@@ -6,7 +6,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 // DOM elements
 const accountBtn = document.getElementById('account')
-const createBetBtn = document.getElementById('createBetBtn')
+const createBtn = document.getElementById('createBtn')
 const balance = document.getElementById('balance')
 const maxBalance = document.getElementById('record')
 const marketsList = document.getElementById('marketsList')
@@ -18,7 +18,7 @@ const userEmail = document.getElementById('userEmail')
 const avatar = document.getElementById('avatar')
 const dropdownBtn = document.getElementById('dropdown-btn')
 const dropdownMenu = document.getElementById('dropdown-menu')
-const dropdownCreateBet = document.getElementById('dropdown-createBet')
+const dropdownCreate = document.getElementById('dropdown-create')
 const dropdownAccount = document.getElementById('dropdown-account')
 
 let currentUser = null
@@ -100,8 +100,8 @@ async function checkSessionAndInit() {
     const { data: profile } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single()
     currentRole = profile?.role ?? null
     if (currentRole === 'Admin' || currentRole === 'Writer') {
-      createBetBtn.style.display = ''
-      if (dropdownCreateBet) dropdownCreateBet.style.display = ''
+      createBtn.style.display = ''
+      if (dropdownCreate) dropdownCreate.style.display = ''
     }
 
     await supabase.rpc('initialize_user_balance', { p_user_id: user.id })
@@ -128,7 +128,7 @@ async function checkSessionAndInit() {
 
 async function loadMarkets() {
   try {
-    marketsList.innerHTML = '<p class="no-results">Loading markets…</p>'
+    marketsList.innerHTML = '<p class="no-results">Loading markets...</p>'
     
     const [betsResult, userBetsResult, statsResult] = await Promise.all([
       supabase.from('bets').select('*').order('created_at', { ascending: false }),

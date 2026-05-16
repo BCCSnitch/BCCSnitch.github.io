@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="./drafts.css">
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/polls/polls.css">
   </head>
   <body>
     <div id="outerContainer" class="container">
@@ -18,10 +18,10 @@
           <div class="brand"><img src="/favicon.png" alt="The Snitch logo" class="brand-logo"><h1>The Snitch</h1></div>
           <nav id="nav">
             <button id="homeBtn" onclick="window.location.href='/'">Home</button>
-            <button id="newBtn">Create New</button>
-            <button id="refreshBtn">Refresh</button>
-            <button id="account" style="display:none;">Account</button>
-            <button id="dropdown-btn" class="dropdown-btn" style="display:none;" aria-label="Menu">
+            <button id="marketBtn" onclick="window.location.href='/market/'">Market</button>
+            <button id="createBtn" onclick="window.location.href='/create/?type=poll'" style="display:none;">Create</button>
+            <button id="account">Account</button>
+            <button id="dropdown-btn" class="dropdown-btn" aria-label="Menu">
               <span></span>
               <span></span>
               <span></span>
@@ -31,36 +31,27 @@
             </a>
             <div id="dropdown-menu" class="dropdown-menu">
               <button onclick="window.location.href='/'">Home</button>
-              <button id="dropdown-newBtn">Create New</button>
-              <button id="dropdown-refreshBtn">Refresh</button>
-              <button id="dropdown-account" style="display:none;">Account</button>
+              <button onclick="window.location.href='/market/'">Market</button>
+              <button id="dropdown-create" onclick="window.location.href='/create/?type=poll'" style="display:none;">Create</button>
+              <button id="dropdown-account">Account</button>
             </div>
           </nav>
         </header>
-
         <main class="layout single-column">
           <section class="main-content">
-            <div class="drafts-hero">
-              <div class="icon">📄</div>
-              <h2>Drafts</h2>
-              <p class="subtitle">Manage in-progress articles</p>
+            <div class="polls-hero">
+              <div class="icon">📊</div>
+              <h2>Polls</h2>
+              <p class="subtitle">It's definitely not gambling if there's not even fake money</p>
             </div>
-
-            <section id="listsWrap" class="lists">
-              <div class="list-block">
-                <h3>Your Drafts</h3>
-                <div id="myDrafts" class="list"></div>
+            <div class="polls-section">
+              <h3>Open Polls</h3>
+              <div id="pollsList">
+                <p class="loading-text">Loading polls...</p>
               </div>
-              <div id="otherBlock" class="list-block" style="display:none">
-                <h3>Other Drafts</h3>
-                <div id="otherDrafts" class="list"></div>
-              </div>
-            </section>
-
-            <div id="msg" class="msg"></div>
+            </div>
           </section>
         </main>
-
         <div id="overlay" class="overlay"></div>
         <aside class="account-sidebar" id="accountSidebar">
           <button class="close-btn" id="closeSidebar">×</button>
@@ -71,10 +62,9 @@
           </div>
           <button class="logout-btn" id="logout">Sign Out</button>
         </aside>
-
         <footer><p>© 2025 The Snitch · America's Finest News Source</p></footer>
       </div>
     </div>
-    <script type="module" src="./drafts.js"></script>
+    <script type="module" src="/polls/polls.js"></script>
   </body>
 </html>

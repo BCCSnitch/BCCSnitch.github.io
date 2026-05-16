@@ -545,6 +545,7 @@ footer {
   /* Hide nav buttons on mobile - dropdown handles navigation (except login) */
   #nav > #admin,
   #nav > #market,
+  #nav > #polls,
   #nav > #writer,
   #nav > #account {
     display: none !important;
